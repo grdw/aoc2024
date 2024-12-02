@@ -8,17 +8,15 @@ fn main() {
 }
 
 fn parse(input: &'static str) -> Vec<Vec<u32>> {
-    let mut l = vec![];
-
-    for line in fs::read_to_string(input).unwrap().lines() {
-        let mut report = vec![];
-        for n in line.split(" ") {
-            report.push(n.parse::<u32>().unwrap());
-        }
-        l.push(report)
-    }
-
-    l
+    fs::read_to_string(input)
+        .unwrap()
+        .lines()
+        .map(|line| {
+            line
+                .split(" ")
+                .map(|n| n.parse::<u32>().unwrap())
+                .collect()
+        }).collect()
 }
 
 #[test]
@@ -45,8 +43,7 @@ fn safety_clearance_dampened(l: &Vec<Vec<u32>>) -> usize {
 // considering how fast this still is... I don't really feel
 // the need to optimize it all that much.
 fn is_safe_minus_one(report: &Vec<u32>) -> bool {
-    let l = report.len();
-    (0..l).any(|j| {
+    (0..report.len()).any(|j| {
         let mut q = report.clone();
         q.remove(j);
         is_safe(&q)
