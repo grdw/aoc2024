@@ -2,28 +2,18 @@ use std::fs;
 use std::ops::Range;
 use regex::Regex;
 
-struct Instruction(u32, u32);
-
 fn main() {
     let shopkeeper_data = fs::read_to_string("input").unwrap();
     let skips = parse_skips(&shopkeeper_data);
-    let instructions = parse(&shopkeeper_data, &vec![]);
-    println!("p1 {}", multiply(&instructions));
-
-    let instructions = parse(&shopkeeper_data, &skips);
-    println!("p2 {}", multiply(&instructions));
-}
-
-fn multiply(instructions: &Vec<Instruction>) -> u32 {
-    instructions.iter().map(|i| i.0 * i.1).sum()
+    println!("p1 {}", multiply(&shopkeeper_data, &vec![]));
+    println!("p2 {}", multiply(&shopkeeper_data, &skips));
 }
 
 #[test]
 fn test_mul_input() {
     let shopkeeper_data = fs::read_to_string("test_input").unwrap();
-    let t = parse(&shopkeeper_data, &vec![]);
 
-    assert_eq!(multiply(&t), 161)
+    assert_eq!(multiply(&shopkeeper_data, &vec![]), 161);
 }
 
 fn parse_skips(input: &String) -> Vec<Range<usize>> {
@@ -37,7 +27,7 @@ fn parse_skips(input: &String) -> Vec<Range<usize>> {
         .collect()
 }
 
-fn parse(input: &String, skips: &Vec<Range<usize>>) -> Vec<Instruction> {
+fn multiply(input: &String, skips: &Vec<Range<usize>>) -> u32 {
     let re = Regex::new(r"mul\((\d+),(\d+)\)").unwrap();
 
     re
@@ -53,16 +43,15 @@ fn parse(input: &String, skips: &Vec<Range<usize>>) -> Vec<Instruction> {
             let left = ls.parse::<u32>().unwrap();
             let right = rs.parse::<u32>().unwrap();
 
-            Instruction(left, right)
+            left * right
         })
-        .collect()
+        .sum()
 }
 
 #[test]
 fn test_mul_input_with_skips() {
     let shopkeeper_data = fs::read_to_string("test_input2").unwrap();
     let skips = parse_skips(&shopkeeper_data);
-    let t = parse(&shopkeeper_data, &skips);
 
-    assert_eq!(multiply(&t), 48)
+    assert_eq!(multiply(&shopkeeper_data, &skips), 48);
 }
