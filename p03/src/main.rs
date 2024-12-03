@@ -39,14 +39,14 @@ fn multiply(input: &String, skips: &Vec<Range<usize>>) -> u32 {
 
 #[test]
 fn test_multiply_input() {
-    let shopkeeper_data = fs::read_to_string("test_input").unwrap();
+    let shopkeeper_data = fs::read_to_string("1").unwrap();
 
     assert_eq!(multiply(&shopkeeper_data, &vec![]), 161);
 }
 
 #[test]
 fn test_multiply_input_with_skips() {
-    let shopkeeper_data = fs::read_to_string("test_input2").unwrap();
+    let shopkeeper_data = fs::read_to_string("2").unwrap();
     let skips = parse_skips(&shopkeeper_data);
 
     assert_eq!(multiply(&shopkeeper_data, &skips), 48);
