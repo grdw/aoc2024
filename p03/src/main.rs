@@ -20,10 +20,7 @@ fn parse_skips(input: &String) -> Vec<Range<usize>> {
     let skips_re = Regex::new(r"don't\(\).*do\(\)").unwrap();
     skips_re
         .captures_iter(&input)
-        .map(|caps| {
-            let m = caps.get(0).unwrap();
-            m.start()..m.end()
-        })
+        .map(|caps| caps.get(0).unwrap().range())
         .collect()
 }
 
@@ -33,8 +30,7 @@ fn multiply(input: &String, skips: &Vec<Range<usize>>) -> u32 {
     re
         .captures_iter(&input)
         .filter(|caps| {
-            let m = caps.get(0).unwrap();
-            let n = m.start()..m.end();
+            let n = caps.get(0).unwrap().range();
 
             !skips.iter().any(|r| r.start <= n.end && n.start <= r.end)
         })
