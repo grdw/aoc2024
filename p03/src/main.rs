@@ -9,13 +9,6 @@ fn main() {
     println!("p2 {}", multiply(&shopkeeper_data, &skips));
 }
 
-#[test]
-fn test_mul_input() {
-    let shopkeeper_data = fs::read_to_string("test_input").unwrap();
-
-    assert_eq!(multiply(&shopkeeper_data, &vec![]), 161);
-}
-
 fn parse_skips(input: &String) -> Vec<Range<usize>> {
     let skips_re = Regex::new(r"don't\(\).*do\(\)").unwrap();
     skips_re
@@ -45,7 +38,14 @@ fn multiply(input: &String, skips: &Vec<Range<usize>>) -> u32 {
 }
 
 #[test]
-fn test_mul_input_with_skips() {
+fn test_multiply_input() {
+    let shopkeeper_data = fs::read_to_string("test_input").unwrap();
+
+    assert_eq!(multiply(&shopkeeper_data, &vec![]), 161);
+}
+
+#[test]
+fn test_multiply_input_with_skips() {
     let shopkeeper_data = fs::read_to_string("test_input2").unwrap();
     let skips = parse_skips(&shopkeeper_data);
 
