@@ -3,6 +3,24 @@ use std::fs;
 type Grid = Vec<Vec<char>>;
 type Point = (isize, isize);
 
+const TRANSLATIONS: [Point; 8] = [
+	(-1, -1), // TOP LEFT
+	(-1, 0),  // TOP CENTRE
+	(-1, 1),  // TOP RIGHT
+	(0, -1),  // CENTRE LEFT
+	(0, 1),   // CENTRE RIGHT
+	(1, -1),  // BOTTOM LEFT
+	(1, 0),   // BOTTOM CENTRE
+	(1, 1)    // BOTTOM RIGHT
+];
+
+const CORNERS: [Point; 4] = [
+	(-1, -1), // TOP LEFT
+	(-1, 1),  // TOP RIGHT
+	(1, -1),  // BOTTOM LEFT
+	(1, 1)    // BOTTOM RIGHT
+];
+
 fn main() {
     let grid = parse("input");
     println!("p1 {}", xmas_count(&grid));
@@ -31,18 +49,7 @@ fn check_word(grid: &Grid, point: &Point) -> u32 {
     let ymax = (grid.len() - 1) as isize;
     let xmax = (grid[0].len() - 1) as isize;
 
-    let diffs = vec![
-        (-1, -1), // TOP LEFT
-        (-1, 0),  // TOP CENTRE
-        (-1, 1),  // TOP RIGHT
-        (0, -1),  // CENTRE LEFT
-        (0, 1),   // CENTRE RIGHT
-        (1, -1),  // BOTTOM LEFT
-        (1, 0),   // BOTTOM CENTRE
-        (1, 1)    // BOTTOM RIGHT
-    ];
-
-    for (dy, dx) in &diffs {
+    for (dy, dx) in &TRANSLATIONS {
         let mut word = String::new();
 
         for i in 0..4 {
@@ -98,22 +105,15 @@ fn is_a_valid_x(grid: &Grid, point: &Point) -> bool {
     let ymax = (grid.len() - 1) as isize;
     let xmax = (grid[0].len() - 1) as isize;
 
-    let diffs = vec![
-        (-1, -1), // TOP LEFT
-        (-1, 1),  // TOP RIGHT
-        (1, -1),  // BOTTOM LEFT
-        (1, 1)    // BOTTOM RIGHT
-    ];
-
 	let valid_words = vec![
-		String::from("MSMS"),
-		String::from("SSMM"),
-		String::from("MMSS"),
-		String::from("SMSM"),
+		"MSMS",
+		"SSMM",
+		"MMSS",
+		"SMSM",
 	];
 
 	let mut word = String::new();
-    for (dy, dx) in &diffs {
+    for (dy, dx) in &CORNERS {
 		let ddy = dy + point.0;
 		let ddx = dx + point.1;
 
@@ -124,7 +124,7 @@ fn is_a_valid_x(grid: &Grid, point: &Point) -> bool {
 		word.push(c);
     }
 
-	valid_words.contains(&word)
+	valid_words.contains(&word.as_str())
 }
 
 #[test]
