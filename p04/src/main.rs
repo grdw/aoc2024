@@ -95,7 +95,7 @@ fn count_xmasses(grid: &Grid, point: &Point) -> u32 {
             word.push(c);
         }
 
-        if word == String::from("XMAS") {
+        if &word == "XMAS" {
             count += 1;
         }
     }
