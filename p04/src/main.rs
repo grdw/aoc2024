@@ -30,24 +30,20 @@ type Point = (isize, isize);
 
 struct Grid {
     vector: RawGrid,
-    ymax: isize,
-    xmax: isize,
     ylen: isize,
     xlen: isize
 }
 
 impl Grid {
     fn new(vector: RawGrid) -> Grid {
-        let ymax = (vector.len() - 1) as isize;
-        let xmax = (vector[0].len() - 1) as isize;
         let ylen = vector.len() as isize;
         let xlen = vector[0].len() as isize;
 
-        Grid {vector, ymax, xmax, ylen, xlen}
+        Grid {vector, ylen, xlen}
     }
 
     fn out_of_bounds(&self, x: isize, y: isize) -> bool {
-        y < 0 || x < 0 || y > self.ymax || x > self.xmax
+        y < 0 || x < 0 || y >= self.ylen || x >= self.xlen
     }
 
     fn get(&self, y: isize, x: isize) -> char {
