@@ -1,21 +1,21 @@
 use std::fs;
 
 const TRANSLATIONS: [Point; 8] = [
-	(-1, -1), // TOP LEFT
-	(-1, 0),  // TOP CENTRE
-	(-1, 1),  // TOP RIGHT
-	(0, -1),  // CENTRE LEFT
-	(0, 1),   // CENTRE RIGHT
-	(1, -1),  // BOTTOM LEFT
-	(1, 0),   // BOTTOM CENTRE
-	(1, 1)    // BOTTOM RIGHT
+    (-1, -1), // TOP LEFT
+    (-1, 0),  // TOP CENTRE
+    (-1, 1),  // TOP RIGHT
+    (0, -1),  // CENTRE LEFT
+    (0, 1),   // CENTRE RIGHT
+    (1, -1),  // BOTTOM LEFT
+    (1, 0),   // BOTTOM CENTRE
+    (1, 1)    // BOTTOM RIGHT
 ];
 
 const CORNERS: [Point; 4] = [
-	(-1, -1), // TOP LEFT
-	(-1, 1),  // TOP RIGHT
-	(1, -1),  // BOTTOM LEFT
-	(1, 1)    // BOTTOM RIGHT
+    (-1, -1), // TOP LEFT
+    (-1, 1),  // TOP RIGHT
+    (1, -1),  // BOTTOM LEFT
+    (1, 1)    // BOTTOM RIGHT
 ];
 
 const VALID_WORDS: [&'static str; 4] = [
@@ -113,38 +113,38 @@ fn test_xmas_counts() {
 }
 
 fn x_mas_count(grid: &Grid) -> usize {
-	let mut centres = vec![];
+    let mut centres = vec![];
 
     for y in 0..grid.ylen {
         for x in 0..grid.xlen {
-			if grid.get(y, x) == 'A' {
-				centres.push((y, x));
-			}
+            if grid.get(y, x) == 'A' {
+                centres.push((y, x));
+            }
         }
     }
 
-	centres
+    centres
         .iter()
         .filter(|centre| is_a_valid_x(&grid, centre))
         .count()
 }
 
 fn is_a_valid_x(grid: &Grid, point: &Point) -> bool {
-	let mut word = String::new();
+    let mut word = String::new();
 
     for (dy, dx) in &CORNERS {
-		let ddy = dy + point.0;
-		let ddx = dx + point.1;
+        let ddy = dy + point.0;
+        let ddx = dx + point.1;
 
         if grid.out_of_bounds(ddy, ddx) {
             continue
         }
 
-		let c = grid.get(ddy, ddx);
-		word.push(c);
+        let c = grid.get(ddy, ddx);
+        word.push(c);
     }
 
-	VALID_WORDS.contains(&word.as_str())
+    VALID_WORDS.contains(&word.as_str())
 }
 
 #[test]
