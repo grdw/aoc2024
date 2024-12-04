@@ -72,12 +72,12 @@ fn parse(input: &'static str) -> Grid {
 fn xmas_count(grid: &Grid) -> u32 {
     (0..grid.ylen).map(|y| {
         (0..grid.xlen).map(|x| {
-            check_word(grid, &(y, x))
+            count_xmasses(grid, &(y, x))
         }).sum::<u32>()
     }).sum()
 }
 
-fn check_word(grid: &Grid, point: &Point) -> u32 {
+fn count_xmasses(grid: &Grid, point: &Point) -> u32 {
     let mut count = 0;
 
     for (dy, dx) in &TRANSLATIONS {
