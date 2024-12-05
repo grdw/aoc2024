@@ -40,24 +40,11 @@ fn parse(input: &'static str) -> (Vec<OrderRules>, Vec<Pages>) {
 }
 
 fn ordered_pages(rules: &Vec<OrderRules>, book: &Vec<Pages>) -> u32 {
-    let mut total = 0;
-
-    for pages in book {
-        let in_order = rules.iter().all(|rule| {
-            let lf = pages.iter().position(|&p| p == rule.0);
-            let rf = pages.iter().position(|&p| p == rule.1);
-
-            match (lf, rf) {
-                (Some(l), Some(r)) => r > l,
-                _ => true
-            }
-        });
-
-        if in_order {
-            total += pages[pages.len() / 2];
-        }
-    }
-    total
+    book
+        .iter()
+        .filter(|pages| is_ordered(rules, pages))
+        .map(|pages| pages[pages.len() / 2])
+        .sum()
 }
 
 #[test]
@@ -68,28 +55,15 @@ fn test_count_ordered_pages() {
 }
 
 fn unordered_pages(rules: &Vec<OrderRules>, book: &Vec<Pages>) -> u32 {
-    let mut unordered_pages = vec![];
-
-    for pages in book {
-        let in_order = rules.iter().all(|rule| {
-            let lf = pages.iter().position(|&p| p == rule.0);
-            let rf = pages.iter().position(|&p| p == rule.1);
-
-            match (lf, rf) {
-                (Some(l), Some(r)) => r > l,
-                _ => true
-            }
-        });
-
-        if !in_order {
-            unordered_pages.push(pages);
-        }
-    }
-
+    let unordered_pages: Vec<Pages> = book
+        .into_iter()
+        .filter(|pages| !is_ordered(rules, pages))
+        .map(|pages| pages.clone())
+        .collect();
 
     let mut total = 0;
-    for u in unordered_pages.into_iter() {
-        let mut t = u.clone();
+    for mut t in unordered_pages.into_iter() {
+        //let mut t = u.clone();
 
         t.sort_by(|a, b| {
             let lr = rules
@@ -107,6 +81,19 @@ fn unordered_pages(rules: &Vec<OrderRules>, book: &Vec<Pages>) -> u32 {
     }
 
     total
+}
+
+
+fn is_ordered(rules: &Vec<OrderRules>, pages: &Pages) -> bool {
+    rules.iter().all(|rule| {
+        let lf = pages.iter().position(|&p| p == rule.0);
+        let rf = pages.iter().position(|&p| p == rule.1);
+
+        match (lf, rf) {
+            (Some(l), Some(r)) => r > l,
+            _ => true
+        }
+    })
 }
 
 #[test]
