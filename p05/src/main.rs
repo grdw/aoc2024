@@ -5,10 +5,10 @@ type OrderRules = (u32, u32);
 type Pages = Vec<u32>;
 
 fn main() {
-    let (ordered_rules, pages) = parse("input");
+    let (ordered_rules, mut pages) = parse("input");
 
     println!("p1 {}", ordered_pages(&ordered_rules, &pages));
-    println!("p2 {}", unordered_pages(&ordered_rules, &pages));
+    println!("p2 {}", unordered_pages(&ordered_rules, &mut pages));
 }
 
 fn parse(input: &'static str) -> (Vec<OrderRules>, Vec<Pages>) {
@@ -54,31 +54,26 @@ fn test_count_ordered_pages() {
     assert_eq!(ordered_pages(&ordered_rules, &pages), 143);
 }
 
-fn unordered_pages(rules: &Vec<OrderRules>, book: &Vec<Pages>) -> u32 {
-    let unordered_pages: Vec<Pages> = book
+fn unordered_pages(rules: &Vec<OrderRules>, book: &mut Vec<Pages>) -> u32 {
+    book
         .into_iter()
         .filter(|pages| !is_ordered(rules, pages))
-        .map(|pages| pages.clone())
-        .collect();
+        .map(|pages| {
+            pages.sort_by(|a, b| {
+                let lr = rules
+                    .iter()
+                    .find(|&&(l, r)| l == *a && r == *b);
 
-    let mut total = 0;
-    for mut t in unordered_pages.into_iter() {
-        t.sort_by(|a, b| {
-            let lr = rules
-                .iter()
-                .find(|&&(l, r)| l == *a && r == *b);
+                if lr.is_some() {
+                    Ordering::Less
+                } else {
+                    Ordering::Greater
+                }
+            });
 
-            if lr.is_some() {
-                Ordering::Less
-            } else {
-                Ordering::Greater
-            }
-        });
-
-        total += t[t.len() / 2];
-    }
-
-    total
+            pages[pages.len() / 2]
+        })
+        .sum()
 }
 
 
@@ -96,7 +91,7 @@ fn is_ordered(rules: &Vec<OrderRules>, pages: &Pages) -> bool {
 
 #[test]
 fn test_count_unordered_pages() {
-    let (ordered_rules, pages) = parse("1");
+    let (ordered_rules, mut pages) = parse("1");
 
-    assert_eq!(unordered_pages(&ordered_rules, &pages), 123);
+    assert_eq!(unordered_pages(&ordered_rules, &mut pages), 123);
 }
