@@ -59,23 +59,21 @@ fn unordered_pages(rules: &Vec<OrderRules>, book: &mut Vec<Pages>) -> u32 {
         .into_iter()
         .filter(|pages| !is_ordered(rules, pages))
         .map(|pages| {
-            pages.sort_by(|a, b| {
-                let lr = rules
-                    .iter()
-                    .find(|&&(l, r)| l == *a && r == *b);
-
-                if lr.is_some() {
-                    Ordering::Less
-                } else {
-                    Ordering::Greater
-                }
-            });
-
+            pages.sort_by(|a, b| order(rules, *a, *b));
             pages[pages.len() / 2]
         })
         .sum()
 }
 
+fn order(rules: &Vec<OrderRules>, a: u32, b: u32) -> Ordering {
+    let lr = rules.iter().find(|&&(l, r)| l == a && r == b);
+
+    if lr.is_some() {
+        Ordering::Less
+    } else {
+        Ordering::Greater
+    }
+}
 
 fn is_ordered(rules: &Vec<OrderRules>, pages: &Pages) -> bool {
     rules.iter().all(|rule| {
