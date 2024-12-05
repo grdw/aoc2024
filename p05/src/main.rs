@@ -63,8 +63,6 @@ fn unordered_pages(rules: &Vec<OrderRules>, book: &Vec<Pages>) -> u32 {
 
     let mut total = 0;
     for mut t in unordered_pages.into_iter() {
-        //let mut t = u.clone();
-
         t.sort_by(|a, b| {
             let lr = rules
                 .iter()
