@@ -76,9 +76,9 @@ fn order(rules: &Vec<OrderRules>, a: u32, b: u32) -> Ordering {
 }
 
 fn is_ordered(rules: &Vec<OrderRules>, pages: &Pages) -> bool {
-    rules.iter().all(|rule| {
-        let lf = pages.iter().position(|&p| p == rule.0);
-        let rf = pages.iter().position(|&p| p == rule.1);
+    rules.iter().all(|(left, right)| {
+        let lf = pages.iter().position(|&p| p == *left);
+        let rf = pages.iter().position(|&p| p == *right);
 
         match (lf, rf) {
             (Some(l), Some(r)) => r > l,
