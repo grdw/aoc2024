@@ -5,7 +5,7 @@ type RawGrid = Vec<Vec<char>>;
 type Point = (isize, isize);
 
 #[derive(PartialEq)]
-enum GuardRoute {
+enum Route {
     OutOfBounds,
     ClosedLoop,
 }
@@ -101,21 +101,15 @@ fn test_unique_steps() {
 }
 
 fn valid_obstacle_count(grid: &Grid) -> usize {
-    let mut obstacle_count = 0;
-    for y in 0..grid.ylen {
-        for x in 0..grid.xlen {
-            if grid.get(&(y, x)) == '.' {
-                let t = try_obstacle(&grid, &(y, x));
-                if t == GuardRoute::ClosedLoop {
-                    obstacle_count += 1
-                }
-            }
-        }
-    }
-    obstacle_count
+    (0..grid.ylen).map(|y| {
+        (0..grid.xlen)
+            .filter(|x| grid.get(&(y, *x)) == '.')
+            .filter(|x| obstacle(&grid, &(y, *x)) == Route::ClosedLoop)
+            .count()
+    }).sum()
 }
 
-fn try_obstacle(grid: &Grid, obstacle: &Point) -> GuardRoute {
+fn obstacle(grid: &Grid, obstacle: &Point) -> Route {
     let mut guard_point = grid.guard();
     let mut direction = 0;
     let mut route = HashSet::new();
@@ -132,13 +126,14 @@ fn try_obstacle(grid: &Grid, obstacle: &Point) -> GuardRoute {
         }
 
         let id = grid.id(&moved_point, direction + 1);
-        let n = route.get(&id);
-        if n.is_some() {
-            return GuardRoute::ClosedLoop
+        let repeat = route.get(&id);
+
+        if repeat.is_some() {
+            return Route::ClosedLoop
         }
 
         if grid.out_of_bounds(&moved_point) {
-            return GuardRoute::OutOfBounds
+            return Route::OutOfBounds
         }
 
         if grid.get(&moved_point) == '#' || &moved_point == obstacle {
@@ -146,7 +141,7 @@ fn try_obstacle(grid: &Grid, obstacle: &Point) -> GuardRoute {
             direction %= 4;
         } else {
             guard_point = moved_point;
-            route.insert(grid.id(&guard_point, direction + 1));
+            route.insert(id);
         }
     }
 }
