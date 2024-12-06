@@ -28,6 +28,10 @@ impl Grid {
         p.0 < 0 || p.1 < 0 || p.0 >= self.ylen || p.1 >= self.xlen
     }
 
+    fn id(&self, p: &Point, dim: u32) -> isize {
+        ((p.0 * self.ylen) + p.1).pow(dim)
+    }
+
     fn get(&self, p: &Point) -> char {
         self.vector[p.0 as usize][p.1 as usize]
     }
@@ -83,7 +87,7 @@ fn unique_steps(grid: &Grid) -> usize {
             direction %= 4;
         } else {
             guard_point = moved_point;
-            route.insert(guard_point);
+            route.insert(grid.id(&guard_point, 1));
         }
     }
 
@@ -127,7 +131,8 @@ fn try_obstacle(grid: &Grid, obstacle: &Point) -> GuardRoute {
             _ => panic!("Invalid direction")
         }
 
-        let n = route.get(&(moved_point, direction));
+        let id = grid.id(&moved_point, direction + 1);
+        let n = route.get(&id);
         if n.is_some() {
             return GuardRoute::ClosedLoop
         }
@@ -141,7 +146,7 @@ fn try_obstacle(grid: &Grid, obstacle: &Point) -> GuardRoute {
             direction %= 4;
         } else {
             guard_point = moved_point;
-            route.insert((guard_point, direction));
+            route.insert(grid.id(&guard_point, direction + 1));
         }
     }
 }
