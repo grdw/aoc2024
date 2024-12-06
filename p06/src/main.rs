@@ -64,34 +64,7 @@ fn parse(input: &'static str) -> Grid {
 }
 
 fn unique_steps(grid: &Grid) -> usize {
-    let mut guard_point = grid.guard();
-    let mut direction = 0;
-    let mut route = HashSet::new();
-
-    loop {
-        let mut moved_point = guard_point;
-
-        match direction {
-            0 => moved_point.0 -= 1,
-            1 => moved_point.1 += 1,
-            2 => moved_point.0 += 1,
-            3 => moved_point.1 -= 1,
-            _ => panic!("Invalid direction")
-        }
-
-        if grid.out_of_bounds(&moved_point) {
-            break;
-        }
-
-        if grid.get(&moved_point) == '#' {
-            direction += 1;
-            direction %= 4;
-        } else {
-            guard_point = moved_point;
-            route.insert(grid.id(&guard_point, 1));
-        }
-    }
-
+    let (route, _) = obstacle(grid, None);
     route.len()
 }
 
@@ -105,15 +78,24 @@ fn valid_obstacle_count(grid: &Grid) -> usize {
     (0..grid.ylen).map(|y| {
         (0..grid.xlen)
             .filter(|x| grid.get(&(y, *x)) == '.')
-            .filter(|x| obstacle(&grid, &(y, *x)) == Route::ClosedLoop)
+            .filter(|x| {
+                let (_, t) = obstacle(&grid, Some((y, *x)));
+                t == Route::ClosedLoop
+            })
             .count()
     }).sum()
 }
 
-fn obstacle(grid: &Grid, obstacle: &Point) -> Route {
+fn obstacle(grid: &Grid, obstacle: Option<Point>) -> (HashSet<isize>, Route) {
     let mut guard_point = grid.guard();
-    let mut direction = 0;
     let mut route = HashSet::new();
+    let mut direction = 0;
+    let mut weight = 0;
+    let obst = obstacle.unwrap_or((-1, -1));
+
+    if obstacle.is_some() {
+        weight = 1;
+    }
 
     loop {
         let mut moved_point = guard_point;
@@ -126,17 +108,17 @@ fn obstacle(grid: &Grid, obstacle: &Point) -> Route {
             _ => panic!("Invalid direction")
         }
 
-        let id = grid.id(&moved_point, direction + 1);
+        let id = grid.id(&moved_point, (direction * weight) + 1);
 
-        if route.contains(&id) {
-            return Route::ClosedLoop
+        if weight > 0 && route.contains(&id) {
+            return (route, Route::ClosedLoop)
         }
 
         if grid.out_of_bounds(&moved_point) {
-            return Route::OutOfBounds
+            return (route, Route::OutOfBounds)
         }
 
-        if grid.get(&moved_point) == '#' || &moved_point == obstacle {
+        if grid.get(&moved_point) == '#' || moved_point == obst {
             direction += 1;
             direction %= 4;
         } else {
