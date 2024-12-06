@@ -58,22 +58,6 @@ fn parse(input: &'static str) -> Grid {
     Grid::new(vector)
 }
 
-fn valid_obstacle_count(grid: &Grid) -> usize {
-    let mut obstacle_count = 0;
-    for y in 0..grid.ylen {
-        for x in 0..grid.xlen {
-            if grid.get(&(y, x)) == '.' {
-                println!("Trying {} {}", y, x);
-                let t = try_obstacle(&grid, &(y, x));
-                if t == GuardRoute::ClosedLoop {
-                    obstacle_count += 1
-                }
-            }
-        }
-    }
-    obstacle_count
-}
-
 fn unique_steps(grid: &Grid) -> usize {
     let mut guard_point = grid.guard();
     let mut direction = 0;
@@ -110,6 +94,21 @@ fn unique_steps(grid: &Grid) -> usize {
 fn test_unique_steps() {
     let grid = parse("1");
     assert_eq!(unique_steps(&grid), 41)
+}
+
+fn valid_obstacle_count(grid: &Grid) -> usize {
+    let mut obstacle_count = 0;
+    for y in 0..grid.ylen {
+        for x in 0..grid.xlen {
+            if grid.get(&(y, x)) == '.' {
+                let t = try_obstacle(&grid, &(y, x));
+                if t == GuardRoute::ClosedLoop {
+                    obstacle_count += 1
+                }
+            }
+        }
+    }
+    obstacle_count
 }
 
 fn try_obstacle(grid: &Grid, obstacle: &Point) -> GuardRoute {
