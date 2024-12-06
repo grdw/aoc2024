@@ -4,6 +4,7 @@ use std::collections::HashSet;
 type RawGrid = Vec<Vec<char>>;
 type Point = (isize, isize);
 
+#[derive(PartialEq)]
 enum GuardRoute {
     OutOfBounds,
     ClosedLoop,
@@ -63,11 +64,9 @@ fn valid_obstacle_count(grid: &Grid) -> usize {
         for x in 0..grid.xlen {
             if grid.get(&(y, x)) == '.' {
                 println!("Trying {} {}", y, x);
-                match try_obstacle(&grid, &(y, x)) {
-                    GuardRoute::ClosedLoop => {
-                        obstacle_count += 1
-                    },
-                    _ => (),
+                let t = try_obstacle(&grid, &(y, x));
+                if t == GuardRoute::ClosedLoop {
+                    obstacle_count += 1
                 }
             }
         }
@@ -129,13 +128,13 @@ fn try_obstacle(grid: &Grid, obstacle: &Point) -> GuardRoute {
             _ => panic!("Invalid direction")
         }
 
-        let n = route.get(&(moved_point.0, moved_point.1, direction));
+        let n = route.get(&(moved_point, direction));
         if n.is_some() {
-            return GuardRoute::ClosedLoop;
+            return GuardRoute::ClosedLoop
         }
 
         if grid.out_of_bounds(&moved_point) {
-            return GuardRoute::OutOfBounds;
+            return GuardRoute::OutOfBounds
         }
 
         if grid.get(&moved_point) == '#' || &moved_point == obstacle {
@@ -143,7 +142,7 @@ fn try_obstacle(grid: &Grid, obstacle: &Point) -> GuardRoute {
             direction %= 4;
         } else {
             guard_point = moved_point;
-            route.insert((guard_point.0, guard_point.1, direction));
+            route.insert((guard_point, direction));
         }
     }
 }
