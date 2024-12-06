@@ -44,7 +44,8 @@ impl Grid {
                 }
             }
         }
-        (0, 0)
+
+        panic!("No guard found")
     }
 }
 
@@ -126,9 +127,8 @@ fn obstacle(grid: &Grid, obstacle: &Point) -> Route {
         }
 
         let id = grid.id(&moved_point, direction + 1);
-        let repeat = route.get(&id);
 
-        if repeat.is_some() {
+        if route.contains(&id) {
             return Route::ClosedLoop
         }
 
