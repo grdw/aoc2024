@@ -30,19 +30,19 @@ fn parse(input: &'static str) -> TestValues {
 fn correct_test_values(test_values: &TestValues, conc: bool) -> u64 {
     test_values
         .iter()
-        .filter(|&(total, nums)| is_corr(nums[0], *total, 1, nums, conc))
+        .filter(|&(total, nums)| is_corr(nums[0], 1, *total, nums, conc))
         .map(|(total, _)| total)
         .sum()
 }
 
-fn is_corr(it: u64, total: u64, i: usize, nums: &Vec<u64>, conc: bool) -> bool {
-    if i == nums.len() {
-        return it == total
+fn is_corr(k: u64, i: usize, l: u64, n: &Vec<u64>, conc: bool) -> bool {
+    if i == n.len() {
+        return k == l
     }
 
-    is_corr(it + nums[i], total, i + 1, nums, conc) ||
-    is_corr(it * nums[i], total, i + 1, nums, conc) ||
-    (conc && is_corr(concat(it, nums[i]), total, i + 1, nums, conc))
+    is_corr(k + n[i], i + 1, l, n, conc) ||
+    is_corr(k * n[i], i + 1, l, n, conc) ||
+    (conc && is_corr(concat(k, n[i]), i + 1, l, n, conc))
 }
 
 #[test]
