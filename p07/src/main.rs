@@ -28,24 +28,14 @@ fn parse(input: &'static str) -> TestValues {
 }
 
 fn correct_test_values(test_values: &TestValues, conc: bool) -> u64 {
-    let mut t = 0;
-
-    for (total, nums) in test_values {
-        if is_corr(nums[0], *total, 1, nums, conc) {
-            t += total
-        }
-    }
-
-    t
+    test_values
+        .iter()
+        .filter(|&(total, nums)| is_corr(nums[0], *total, 1, nums, conc))
+        .map(|(total, _)| total)
+        .sum()
 }
 
-fn is_corr(
-    it: u64,
-    total: u64,
-    i: usize,
-    nums: &Vec<u64>,
-    conc: bool) -> bool {
-
+fn is_corr(it: u64, total: u64, i: usize, nums: &Vec<u64>, conc: bool) -> bool {
     if i == nums.len() {
         return it == total
     }
