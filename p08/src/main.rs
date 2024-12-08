@@ -49,8 +49,8 @@ fn uniq_antinodes(grid: &Grid, antennas: &Antennas) -> usize {
     for (_, ants) in antennas {
         for i in 0..ants.len() {
             for j in (i + 1)..ants.len() {
-                let (ky, kx) = ants[j];
-                let (ly, lx) = ants[i];
+                let (ky, kx) = ants[i];
+                let (ly, lx) = ants[j];
                 let (dy, dx) = (ky - ly, kx - lx);
 
                 let a = (ky + dy, kx + dx);
@@ -84,8 +84,8 @@ fn uniq_resonating_antinodes(grid: &Grid, antennas: &Antennas) -> usize {
     for (_, ants) in antennas {
         for i in 0..ants.len() {
             for j in (i + 1)..ants.len() {
-                let (ky, kx) = ants[j];
-                let (ly, lx) = ants[i];
+                let (ky, kx) = ants[i];
+                let (ly, lx) = ants[j];
                 let (dy, dx) = (ky - ly, kx - lx);
 
                 let (mut ay, mut ax) = (ky, kx);
