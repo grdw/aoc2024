@@ -30,7 +30,9 @@ impl Grid {
 
 fn main() {
     let grid = parse("input");
-    println!("p1 {}", unique_antinodes(&grid))
+    let antennas = get_antennas(&grid);
+    println!("p1 {}", uniq_antinodes(&grid, &antennas));
+    println!("p2 {}", uniq_resonating_antinodes(&grid, &antennas));
 }
 
 fn parse(input: &'static str) -> Grid {
@@ -41,23 +43,8 @@ fn parse(input: &'static str) -> Grid {
     Grid::new(vector)
 }
 
-fn unique_antinodes(grid: &Grid) -> usize {
-    let mut antennas: Antennas = HashMap::new();
+fn uniq_antinodes(grid: &Grid, antennas: &Antennas) -> usize {
     let mut set = HashSet::new();
-
-    for y in 0..grid.ylen {
-        for x in 0..grid.xlen {
-            let c = grid.get(&(y, x));
-            if c == '.'{
-                continue
-            }
-
-            antennas
-                .entry(c)
-                .and_modify(|n| n.push((y, x)))
-                .or_insert(vec![(y, x)]);
-        }
-    }
 
     for (_, ants) in antennas {
         for i in 0..ants.len() {
@@ -84,7 +71,76 @@ fn unique_antinodes(grid: &Grid) -> usize {
 }
 
 #[test]
-fn test_unique_antinodes() {
+fn test_uniq_antinodes() {
     let grid = parse("1");
-    assert_eq!(unique_antinodes(&grid), 14)
+    let antennas = get_antennas(&grid);
+
+    assert_eq!(uniq_antinodes(&grid, &antennas), 14)
+}
+
+fn uniq_resonating_antinodes(grid: &Grid, antennas: &Antennas) -> usize {
+    let mut set = HashSet::new();
+
+    for (_, ants) in antennas {
+        for i in 0..ants.len() {
+            for j in (i + 1)..ants.len() {
+                let (ky, kx) = ants[j];
+                let (ly, lx) = ants[i];
+                let (dy, dx) = (ky - ly, kx - lx);
+
+                let (mut ay, mut ax) = (ky, kx);
+                let (mut by, mut bx) = (ly, lx);
+
+                while !grid.out_of_bounds(&(ay, ax)) {
+                    set.insert((ay, ax));
+                    ay += dy;
+                    ax += dx;
+                }
+
+                while !grid.out_of_bounds(&(by, bx)) {
+                    set.insert((by, bx));
+                    by -= dy;
+                    bx -= dx;
+                }
+            }
+        }
+    }
+
+    set.len()
+}
+
+#[test]
+fn test_uniq_resonating_antinodes_1() {
+    let grid = parse("1");
+    let antennas = get_antennas(&grid);
+
+    assert_eq!(uniq_resonating_antinodes(&grid, &antennas), 34)
+}
+
+#[test]
+fn test_uniq_resonating_antinodes_2() {
+    let grid = parse("2");
+    let antennas = get_antennas(&grid);
+
+    assert_eq!(uniq_resonating_antinodes(&grid, &antennas), 9);
+}
+
+fn get_antennas(grid: &Grid) -> Antennas {
+    let mut antennas: Antennas = HashMap::new();
+
+    for y in 0..grid.ylen {
+        for x in 0..grid.xlen {
+            let c = grid.get(&(y, x));
+            if c == '.'{
+                continue
+            }
+
+            antennas
+                .entry(c)
+                .and_modify(|n| n.push((y, x)))
+                .or_insert(vec![(y, x)]);
+        }
+    }
+
+    antennas
 }
