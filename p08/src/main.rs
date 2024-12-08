@@ -53,15 +53,15 @@ fn uniq_antinodes(grid: &Grid, antennas: &Antennas) -> usize {
                 let (ly, lx) = ants[i];
                 let (dy, dx) = (ky - ly, kx - lx);
 
-                let a1 = (ky + dy, kx + dx);
-                let b1 = (ly - dy, lx - dx);
+                let a = (ky + dy, kx + dx);
+                let b = (ly - dy, lx - dx);
 
-                if !grid.out_of_bounds(&a1) {
-                    set.insert(a1);
+                if !grid.out_of_bounds(&a) {
+                    set.insert(a);
                 }
 
-                if !grid.out_of_bounds(&b1) {
-                    set.insert(b1);
+                if !grid.out_of_bounds(&b) {
+                    set.insert(b);
                 }
             }
         }
