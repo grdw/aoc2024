@@ -116,7 +116,7 @@ fn checksum_whole(files: &mut Layout, spaces: &mut Layout) -> usize {
     for id in (0..files.len()).rev() {
         for i in 0..spaces.len() {
             let fl = files[id];
-            if spaces[i] < fl {
+            if fl == 0 || spaces[i] < fl || id <= i {
                 continue
             }
 
@@ -151,4 +151,6 @@ fn checksum_whole(files: &mut Layout, spaces: &mut Layout) -> usize {
 fn test_expand_compress_whole() {
     let (mut files, mut spaces) = parse("2");
     assert_eq!(checksum_whole(&mut files, &mut spaces), 2858);
+    let (mut files, mut spaces) = parse("5");
+    assert_eq!(checksum_whole(&mut files, &mut spaces), 1715);
 }
