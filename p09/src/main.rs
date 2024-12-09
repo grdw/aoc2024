@@ -5,9 +5,10 @@ type Layout = Vec<usize>;
 type DiskMap = (Layout, Layout);
 
 fn main() {
-    let (mut files, spaces) = parse("input");
+    let (mut files, mut spaces) = parse("input");
+    let mut f = files.clone();
     println!("p1 {}", checksum(&mut files, &spaces));
-    println!("p2 {}", checksum_whole(&mut files, &spaces));
+    println!("p2 {}", checksum_whole(&mut f, &mut spaces));
 }
 
 fn parse(input: &'static str) -> DiskMap {
@@ -89,13 +90,6 @@ fn extend(compressed: &mut Layout, n: usize, length: usize) {
     }
 }
 
-fn checksum_whole(files: &mut Layout, spaces: &Layout) -> usize {
-    let mut compressed: Vec<usize> = vec![];
-    (0..compressed.len())
-        .map(|i| compressed[i] * i)
-        .sum()
-}
-
 #[test]
 fn test_expand_compress_easy() {
     let (mut files, spaces) = parse("1");
@@ -112,4 +106,49 @@ fn test_expand_compress() {
 
     let (mut files, spaces) = parse("4");
     assert_eq!(checksum(&mut files, &spaces), 275);
+}
+
+fn checksum_whole(files: &mut Layout, spaces: &mut Layout) -> usize {
+    let mut compressed = vec![];
+    let mut sindex = 0;
+    let mut list = vec![];
+
+    for id in (0..files.len()).rev() {
+        for i in 0..spaces.len() {
+            let fl = files[id];
+            if spaces[i] < fl {
+                continue
+            }
+
+            list.push((id, fl, i));
+            spaces[i] -= fl;
+            break;
+        }
+    }
+
+    for findex in 0..files.len() {
+        let l = files[findex];
+        let mut t = findex;
+        if list.iter().any(|(id, _, _)| id == &findex) {
+            t = 0;
+        }
+        extend(&mut compressed, t, l);
+
+        let sl = spaces.get(sindex).unwrap_or(&0);
+        for (a, b, _) in list.iter().filter(|&r| r.2 == sindex) {
+            extend(&mut compressed, *a, *b);
+        }
+        extend(&mut compressed, 0, *sl);
+        sindex += 1;
+    }
+
+    (0..compressed.len())
+        .map(|i| compressed[i] * i)
+        .sum()
+}
+
+#[test]
+fn test_expand_compress_whole() {
+    let (mut files, mut spaces) = parse("2");
+    assert_eq!(checksum_whole(&mut files, &mut spaces), 2858);
 }
