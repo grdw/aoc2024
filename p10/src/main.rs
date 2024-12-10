@@ -10,7 +10,7 @@ const TRANSLATIONS: [Point; 4] = [
 
 type RawGrid = Vec<Vec<u8>>;
 type Point = (isize, isize);
-type PointV = (isize, isize, u8);
+type PointValue = (isize, isize, u8);
 
 struct Grid {
     vector: RawGrid,
@@ -64,7 +64,7 @@ fn trailhead_scores(grid: &Grid) -> usize {
         .sum()
 }
 
-fn trailhead_score(grid: &Grid, start: PointV) -> usize {
+fn trailhead_score(grid: &Grid, start: PointValue) -> usize {
     let mut set = HashSet::new();
     let mut deq = VecDeque::new();
     deq.push_back(start);
