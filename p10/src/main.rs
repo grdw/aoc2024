@@ -38,6 +38,7 @@ impl Grid {
 fn main() {
     let grid = parse("input");
     println!("p1 {}", trailhead_scores(&grid));
+    println!("p2 {}", trailhead_ratings(&grid));
 }
 
 fn parse(input: &'static str) -> Grid {
@@ -49,6 +50,13 @@ fn parse(input: &'static str) -> Grid {
 }
 
 fn trailhead_scores(grid: &Grid) -> usize {
+    origins(grid)
+        .iter()
+        .map(|p| trailhead_score(grid, *p))
+        .sum()
+}
+
+fn origins(grid: &Grid) -> Vec<PointValue> {
     let mut starts = vec![];
     for y in 0..grid.ylen {
         for x in 0..grid.xlen {
@@ -57,11 +65,7 @@ fn trailhead_scores(grid: &Grid) -> usize {
             }
         }
     }
-
     starts
-        .iter()
-        .map(|p| trailhead_score(grid, *p))
-        .sum()
 }
 
 fn trailhead_score(grid: &Grid, start: PointValue) -> usize {
@@ -104,3 +108,43 @@ fn test_trailhead_score() {
     let grid = parse("2");
     assert_eq!(trailhead_scores(&grid), 36);
 }
+
+fn trailhead_ratings(grid: &Grid) -> usize {
+    origins(grid)
+        .iter()
+        .map(|p| trailhead_rating(grid, *p))
+        .sum()
+}
+
+fn trailhead_rating(grid: &Grid, start: PointValue) -> usize {
+    let mut routes = 0;
+    let mut deq = VecDeque::new();
+    deq.push_back(start);
+
+    while let Some((y, x, v)) = deq.pop_front() {
+        for (dy, dx) in &TRANSLATIONS {
+            let (ty, tx) = (y - dy, x - dx);
+
+            if !grid.out_of_bounds(ty, tx) {
+                let vv = grid.get(ty, tx);
+                if vv == v + 1 && vv == 9 {
+                    routes += 1;
+                    continue
+                }
+
+                if vv == v + 1 {
+                    deq.push_back((ty, tx, vv));
+                }
+            }
+        }
+    }
+
+    routes
+}
+
+#[test]
+fn test_trailhead_rating() {
+    let grid = parse("2");
+    assert_eq!(trailhead_ratings(&grid), 81);
+}
+
