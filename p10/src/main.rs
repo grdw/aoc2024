@@ -86,17 +86,22 @@ fn trailhead_total(grid: &Grid, start: PointValue) -> (usize, usize) {
         for (dy, dx) in &TRANSLATIONS {
             let (ty, tx) = (y - dy, x - dx);
 
-            if !grid.out_of_bounds(ty, tx) {
-                let vv = grid.get(ty, tx);
-                if vv == v + 1 && vv == 9 {
-                    routes += 1;
-                    set.insert((ty, tx));
-                    continue
-                }
+            if grid.out_of_bounds(ty, tx) {
+                continue
+            }
 
-                if vv == v + 1 {
-                    deq.push_back((ty, tx, vv));
-                }
+            let value = grid.get(ty, tx);
+
+            if v + 1 != value {
+                continue
+            }
+
+            deq.push_back((ty, tx, value));
+
+            if value == 9 {
+                routes += 1;
+                set.insert((ty, tx));
+                continue
             }
         }
     }
