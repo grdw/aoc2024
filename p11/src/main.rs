@@ -1,62 +1,7 @@
 use std::fs;
-use std::rc::Rc;
-use std::cell::RefCell;
+use std::collections::HashMap;
 
-type TreeNode = Rc<RefCell<Node>>;
 type Stones = Vec<u64>;
-
-#[derive(Debug)]
-struct Node {
-    value: u64,
-    left: Option<TreeNode>,
-    right: Option<TreeNode>,
-}
-
-impl Node {
-    fn new(value: u64) -> TreeNode {
-        Rc::new(
-            RefCell::new(
-                Node { value, left: None, right: None }
-            )
-        )
-    }
-
-    fn add_left_child(&mut self, value: u64) -> TreeNode {
-        let left = Node::new(value);
-        self.left = Some(left.clone());
-        left
-    }
-
-    fn add_right_child(&mut self, value: u64) -> TreeNode {
-        let right = Node::new(value);
-        self.right = Some(right.clone());
-        right
-    }
-
-    fn find_by_value(t: TreeNode, value: u64) -> Option<TreeNode> {
-        let mut node = t.borrow();
-
-        if node.value == value {
-            return Some(t.clone())
-        }
-
-        if let Some(left) = &t.borrow().left {
-            return Self::find_by_value(left.clone(), value)
-        }
-        if let Some(right) = &t.borrow().right {
-            return Self::find_by_value(right.clone(), value)
-        }
-
-        None
-
-    }
-}
-
-enum Action {
-    ToOne,
-    Split(u64, u64),
-    Mul,
-}
 
 fn main() {
     let stones = parse("input");
@@ -75,42 +20,37 @@ fn parse(input: &'static str) -> Stones {
         .collect()
 }
 
-fn count_stones(stones: &Stones, blinks: u8) -> usize {
-    let mut trees = vec![];
-    for stone in stones.iter() {
-        let mut node = Node::new(*stone);
-        build_tree(node.clone(), node.clone(), 0, blinks);
-        trees.push(node);
+fn count_stones(stones: &Stones, blinks: u16) -> usize {
+    let mut map:HashMap<u64, usize> = HashMap::new();
+
+    for stone in stones {
+        map.insert(*stone, 1);
     }
 
-    0
-}
+    for _ in 0..blinks {
+        let mut cache: HashMap<u64, usize> = HashMap::new();
 
-fn build_tree(root: TreeNode, node: TreeNode, depth: u8, max: u8) {
-    if depth == max {
-        return
+        for (&stone, &count) in map.iter() {
+            if stone == 0 {
+                *cache.entry(1).or_default() += count;
+            } else {
+                let dl = digit_length(stone);
+                if dl % 2 == 0 {
+                    let k = 10_u64.pow(dl / 2);
+                    let l = stone / k;
+                    let r = stone - (l * k);
+
+                    *cache.entry(l).or_default() += count;
+                    *cache.entry(r).or_default() += count;
+                } else {
+                    *cache.entry(stone * 2024).or_default() += count;
+                }
+            }
+        }
+        map = cache;
     }
 
-    let mut n = node.borrow_mut();
-    let stone = n.value;
-    let l = digit_length(stone);
-
-    if stone == 0 {
-        let on = n.add_left_child(1);
-        build_tree(root.clone(), on, depth + 1, max);
-    } else if l % 2 == 0 {
-        let k = 10_u64.pow(l / 2);
-        let l = stone / k;
-        let r = stone - (l * k);
-
-        let ln = n.add_left_child(l);
-        let rn = n.add_right_child(r);
-        build_tree(root.clone(), ln, depth + 1, max);
-        build_tree(root.clone(), rn, depth + 1, max);
-    } else {
-        let mn = n.add_left_child(stone * 2024);
-        build_tree(root.clone(), mn, depth + 1, max);
-    }
+    map.values().sum()
 }
 
 fn digit_length(stone: u64) -> u32 {
