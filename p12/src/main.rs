@@ -209,17 +209,20 @@ fn total_fencing_cost_with_discount(garden: &Garden) -> usize {
                 let (_, by, bx) = &fences[i][l];
                 let (dy, dx) = ((ay - by).abs(), (ax - bx).abs());
 
-                if dy == 1 && dx == 1 {
-                    if garden.name(*ay, *bx) == ' ' {
-                        po.entry((*ay, *bx))
-                            .and_modify(|n| *n += 1)
-                            .or_insert(1);
-                    } else if garden.name(*by, *ax) == ' ' {
-                        po.entry((*by, *ax))
-                            .and_modify(|n| *n += 1)
-                            .or_insert(1);
-                    }
+                if !(dy == 1 && dx == 1) {
+                    continue
                 }
+
+                let (mut ny, mut nx) = (0, 0);
+                if garden.name(*ay, *bx) == ' ' {
+                    (ny, nx) = (*ay, *bx);
+                } else if garden.name(*by, *ax) == ' ' {
+                    (ny, nx) = (*by, *ax);
+                }
+
+                po.entry((ny, nx))
+                    .and_modify(|n| *n += 1)
+                    .or_insert(1);
             }
         }
 
