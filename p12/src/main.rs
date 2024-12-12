@@ -1,16 +1,11 @@
 use std::fs;
-use std::collections::{HashMap, HashSet, VecDeque};
+use std::collections::{HashSet, VecDeque};
 
 const TRANSLATIONS: [(char, isize, isize); 4] = [
     ('T', -2, 0),  // TOP
     ('L', 0, -2),  // LEFT
     ('R', 0, 2),   // RIGHT
     ('B', 2, 0),   // BOTTOM
-];
-
-const AREA_TRANSLATIONS: [(isize, isize); 2] = [
-    (0, 2), // RIGHT
-    (2, 0), // BOTTOM
 ];
 
 const FENCE_TRANSLATIONS: [(isize, isize); 4] = [
@@ -155,10 +150,15 @@ fn fence_off(garden: &mut Garden) {
 
 fn areas(garden: &Garden) -> Vec<Area> {
     let mut areas: Vec<Area> = vec![];
+    let mut seen = HashSet::new();
     let mut vec = VecDeque::new();
     vec.push_back((' ', 1, 1));
 
     while let Some((prev_name, y, x)) = vec.pop_front() {
+        if seen.contains(&(y, x)) {
+            continue
+        }
+
         let name = garden.name(y, x);
 
         if prev_name == name {
@@ -169,31 +169,37 @@ fn areas(garden: &Garden) -> Vec<Area> {
                 _ => ()
             }
         } else {
-            println!("NEW! {} {}", y, x);
             let mut set = HashSet::new();
             set.insert((y, x));
             areas.push((name, set));
         }
 
-        for (ty, tx) in &AREA_TRANSLATIONS {
+        for (_, ty, tx) in &TRANSLATIONS {
             let (ey, ex) = (y + ty, x + tx);
+            let new_name = garden.name(ey, ex);
 
-            if garden.out_of_bounds(ey, ex) {
+            if new_name == ' ' {
                 continue
             }
 
-            vec.push_back((name, ey, ex));
+            if new_name == name {
+                vec.push_front((name, ey, ex));
+            } else {
+                vec.push_back((name, ey, ex));
+            }
         }
+
+        seen.insert((y, x));
     }
 
     areas
 }
 
 fn total_fencing_cost(garden: &Garden) -> usize {
-    let mut total_areas = areas(garden);
+    let total_areas = areas(garden);
     let mut total_fencing = vec![];
 
-    for (name, points) in &total_areas {
+    for (_, points) in &total_areas {
         let mut subtotal = 0;
         for (y, x) in points {
             for (ty, tx) in &FENCE_TRANSLATIONS {
@@ -204,16 +210,6 @@ fn total_fencing_cost(garden: &Garden) -> usize {
             }
         }
         total_fencing.push(subtotal);
-    }
-
-    for i in 0..total_areas.len() {
-        let (name, points) = &total_areas[i];
-        println!("A region of {} plants with price {} * {} = {}",
-            name,
-            points.len(),
-            total_fencing[i],
-            points.len() * total_fencing[i]
-        );
     }
 
     (0..total_areas.len())
