@@ -9,15 +9,9 @@ const TRANSLATIONS: [(char, isize, isize); 4] = [
     ('L', 0, -2),  // LEFT
 ];
 
-type RawGarden = Vec<Vec<Spot>>;
+type RawGarden = Vec<Vec<char>>;
 type Point = (isize, isize);
 type Area = (char, Vec<Point>);
-
-#[derive(Clone, Debug)]
-enum Spot {
-    Patch(char),
-    Empty
-}
 
 #[derive(Debug)]
 struct Garden {
@@ -41,17 +35,17 @@ impl Garden {
         let xlen = vector[0].len();
 
         for y in 0..ylen {
-            let mut row = vec![Spot::Empty];
+            let mut row = vec![' '];
             for x in 0..xlen {
-                row.push(Spot::Patch(vector[y][x]));
-                row.push(Spot::Empty);
+                row.push(vector[y][x]);
+                row.push(' ');
             }
-            let empty_row = vec![Spot::Empty; row.len()];
+            let empty_row = vec![' '; row.len()];
             v.push(empty_row);
             v.push(row);
         }
 
-        let bottom_row = vec![Spot::Empty; v[0].len()];
+        let bottom_row = vec![' '; v[0].len()];
         v.push(bottom_row);
 
         v
@@ -61,19 +55,16 @@ impl Garden {
         y < 0 || x < 0 || y >= self.ylen || x >= self.xlen
     }
 
-    fn get(&self, y: isize, x: isize) -> &Spot {
+    fn get(&self, y: isize, x: isize) -> &char {
         &self.vector[y as usize][x as usize]
     }
 
-    fn name(&self, y: isize, x: isize) -> char {
+    fn name(&self, y: isize, x: isize) -> &char {
         if self.out_of_bounds(y, x) {
-            return ' '
+            return &' '
         }
 
-        match self.get(y, x) {
-            Spot::Patch(ac) => *ac,
-            _ => ' '
-        }
+        self.get(y, x)
     }
 }
 
@@ -136,28 +127,28 @@ fn areas(garden: &Garden) -> Vec<Area> {
 
         let name = garden.name(y, x);
 
-        if prev_name == name {
-            let search = areas.iter_mut().rfind(|(n, _)| *n == name);
+        if &prev_name == name {
+            let search = areas.iter_mut().rfind(|(n, _)| n == name);
 
             if let Some((_, ref mut points)) = search {
                 points.push((y, x));
             }
         } else {
-            areas.push((name, vec![(y, x)]));
+            areas.push((*name, vec![(y, x)]));
         }
 
         for (_, ty, tx) in &TRANSLATIONS {
             let (ey, ex) = (y + ty, x + tx);
             let new_name = garden.name(ey, ex);
 
-            if new_name == ' ' {
+            if new_name == &' ' {
                 continue
             }
 
             if new_name == name {
-                vec.push_front((name, ey, ex));
+                vec.push_front((*name, ey, ex));
             } else {
-                vec.push_back((name, ey, ex));
+                vec.push_back((*name, ey, ex));
             }
         }
 
@@ -213,9 +204,9 @@ fn total_fencing_cost_with_discount(garden: &Garden) -> usize {
                 }
 
                 let (mut ny, mut nx) = (0, 0);
-                if garden.name(*ay, *bx) == ' ' {
+                if garden.name(*ay, *bx) == &' ' {
                     (ny, nx) = (*ay, *bx);
-                } else if garden.name(*by, *ax) == ' ' {
+                } else if garden.name(*by, *ax) == &' ' {
                     (ny, nx) = (*by, *ax);
                 }
 
