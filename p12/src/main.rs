@@ -8,20 +8,20 @@ const TRANSLATIONS: [(char, isize, isize); 4] = [
     ('B', 2, 0),   // BOTTOM
 ];
 
-const FENCE_TRANSLATIONS: [(isize, isize); 4] = [
-    (-1, 0),  // TOP
-    (0, -1),  // LEFT
-    (0, 1),   // RIGHT
-    (1, 0),   // BOTTOM
+const FENCE_TRANSLATIONS: [(char, isize, isize); 4] = [
+    ('L', 0, -1),  // LEFT
+    ('T', -1, 0),  // TOP
+    ('R', 0, 1),   // RIGHT
+    ('B', 1, 0),   // BOTTOM
 ];
 
 type RawGarden = Vec<Vec<Spot>>;
-type Area = (char, HashSet<(isize, isize)>);
+type Area = (char, Vec<(isize, isize)>);
 
 #[derive(Clone, Debug)]
 enum Spot {
     Patch(char),
-    Fence,
+    Fence(char),
     Empty
 }
 
@@ -91,7 +91,7 @@ impl Garden {
             for x in 0..self.xlen {
                 match self.get(y, x) {
                     Spot::Empty => print!(" "),
-                    Spot::Fence => print!("F"),
+                    Spot::Fence(_) => print!("F"),
                     Spot::Patch(c) => print!("{}", c)
                 }
             }
@@ -112,6 +112,7 @@ fn main() {
     let mut patch = parse("input");
     fence_off(&mut patch);
     println!("p1 {}", total_fencing_cost(&patch));
+    println!("p2 {}", total_fencing_cost_with_discount(&patch));
 }
 
 fn fence_off(garden: &mut Garden) {
@@ -133,18 +134,18 @@ fn fence_off(garden: &mut Garden) {
                 if ac == bc { continue }
 
                 let _ = match dir {
-                    'T' => fence_points.insert((y - 1, x)),
-                    'B' => fence_points.insert((y + 1, x)),
-                    'L' => fence_points.insert((y, x - 1)),
-                    'R' => fence_points.insert((y, x + 1)),
+                    'T' => fence_points.insert((dir, y - 1, x)),
+                    'B' => fence_points.insert((dir, y + 1, x)),
+                    'L' => fence_points.insert((dir, y, x - 1)),
+                    'R' => fence_points.insert((dir, y, x + 1)),
                     _ => panic!("Invalid direction"),
                 };
             }
         }
     }
 
-    for (fy, fx) in fence_points {
-        garden.set(fy, fx, Spot::Fence);
+    for (dir, fy, fx) in fence_points {
+        garden.set(fy, fx, Spot::Fence(*dir));
     }
 }
 
@@ -165,12 +166,10 @@ fn areas(garden: &Garden) -> Vec<Area> {
             let search = areas.iter_mut().rfind(|(n, _)| *n == name);
 
             if let Some((_, ref mut points)) = search {
-                points.insert((y, x));
+                points.push((y, x));
             }
         } else {
-            let mut set = HashSet::new();
-            set.insert((y, x));
-            areas.push((name, set));
+            areas.push((name, vec![(y, x)]));
         }
 
         for (_, ty, tx) in &TRANSLATIONS {
@@ -201,9 +200,9 @@ fn total_fencing_cost(garden: &Garden) -> usize {
     for (_, points) in &total_areas {
         let mut subtotal = 0;
         for (y, x) in points {
-            for (ty, tx) in &FENCE_TRANSLATIONS {
+            for (_, ty, tx) in &FENCE_TRANSLATIONS {
                 let (dy, dx) = (y + ty, x + tx);
-                if let Spot::Fence = garden.get(dy, dx) {
+                if let Spot::Fence(_) = garden.get(dy, dx) {
                     subtotal += 1;
                 }
             }
@@ -217,22 +216,87 @@ fn total_fencing_cost(garden: &Garden) -> usize {
 }
 
 #[test]
-fn test_fencing_1() {
+fn test_fencing_cost_1() {
     let mut patch = parse("1");
     fence_off(&mut patch);
     assert_eq!(total_fencing_cost(&patch), 140);
 }
 
 #[test]
-fn test_fencing_2() {
+fn test_fencing_cost_2() {
     let mut patch = parse("2");
     fence_off(&mut patch);
     assert_eq!(total_fencing_cost(&patch), 772);
 }
 
 #[test]
-fn test_fencing_3() {
+fn test_fencing_cost_3() {
     let mut patch = parse("3");
     fence_off(&mut patch);
     assert_eq!(total_fencing_cost(&patch), 1930);
+}
+
+fn total_fencing_cost_with_discount(garden: &Garden) -> usize {
+    let total_areas = areas(garden);
+    let mut total_sides = vec![];
+
+    for (name, points) in &total_areas {
+        let mut subtotal = 0;
+        let mut fences = vec![];
+
+        for (y, x) in points {
+            for (dir, ty, tx) in &FENCE_TRANSLATIONS {
+                let (dy, dx) = (y + ty, x + tx);
+                if let Spot::Fence(_) = garden.get(dy, dx) {
+                    fences.push((*dir, y, x));
+                }
+            }
+        }
+
+        fences.sort_by_key(|&(_, y, x)| (y, x));
+
+        println!("{:?}", fences);
+
+        for i in 0..fences.len() {
+            let j = (i + 1) % fences.len();
+            let corner = format!("{}{}", fences[i].0, fences[j].0);
+
+            print!("{}", corner);
+
+            match corner.as_str() {
+                "LT" | "TL" | "LB" | "BL" | "RT" | "TR" | "BR" | "RB" => {
+                    println!(".");
+                    subtotal += 1;
+                },
+                _ => ()
+            }
+        }
+        println!("== {} {:?}", name, subtotal);
+        total_sides.push(subtotal);
+    }
+
+    (0..total_areas.len())
+        .map(|i| (total_areas[i].1.len() * total_sides[i]))
+        .sum()
+}
+
+#[test]
+fn test_fencing_cost_with_discount_1() {
+    let mut patch = parse("1");
+    fence_off(&mut patch);
+    assert_eq!(total_fencing_cost_with_discount(&patch), 80);
+}
+
+#[test]
+fn test_fencing_cost_with_discount_2() {
+    let mut patch = parse("2");
+    fence_off(&mut patch);
+    assert_eq!(total_fencing_cost_with_discount(&patch), 436);
+}
+
+#[test]
+fn test_fencing_cost_with_discount_3() {
+    let mut patch = parse("3");
+    fence_off(&mut patch);
+    assert_eq!(total_fencing_cost_with_discount(&patch), 1206);
 }
