@@ -162,11 +162,10 @@ fn areas(garden: &Garden) -> Vec<Area> {
         let name = garden.name(y, x);
 
         if prev_name == name {
-            match areas.iter_mut().rfind(|(n, _)| *n == name) {
-                Some((_, ref mut points)) => {
-                    points.insert((y, x));
-                },
-                _ => ()
+            let search = areas.iter_mut().rfind(|(n, _)| *n == name);
+
+            if let Some((_, ref mut points)) = search {
+                points.insert((y, x));
             }
         } else {
             let mut set = HashSet::new();
