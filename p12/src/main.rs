@@ -8,6 +8,11 @@ const TRANSLATIONS: [(char, isize, isize); 4] = [
     ('B', 2, 0),   // BOTTOM
 ];
 
+const AREA_TRANSLATIONS: [(isize, isize); 2] = [
+    (0, 2), // RIGHT
+    (2, 0), // BOTTOM
+];
+
 const FENCE_TRANSLATIONS: [(isize, isize); 4] = [
     (-1, 0),  // TOP
     (0, -1),  // LEFT
@@ -151,37 +156,33 @@ fn fence_off(garden: &mut Garden) {
 fn areas(garden: &Garden) -> Vec<Area> {
     let mut areas: Vec<Area> = vec![];
     let mut vec = VecDeque::new();
-    vec.push_back((1, 1));
+    vec.push_back((' ', 1, 1));
 
-    for y in 0..garden.ylen {
-        for x in 0..garden.xlen {
-            let name = garden.name(y, x);
+    while let Some((prev_name, y, x)) = vec.pop_front() {
+        let name = garden.name(y, x);
 
-            if name == ' ' {
+        if prev_name == name {
+            match areas.iter_mut().rfind(|(n, _)| *n == name) {
+                Some((_, ref mut points)) => {
+                    points.insert((y, x));
+                },
+                _ => ()
+            }
+        } else {
+            println!("NEW! {} {}", y, x);
+            let mut set = HashSet::new();
+            set.insert((y, x));
+            areas.push((name, set));
+        }
+
+        for (ty, tx) in &AREA_TRANSLATIONS {
+            let (ey, ex) = (y + ty, x + tx);
+
+            if garden.out_of_bounds(ey, ex) {
                 continue
             }
 
-            let search = areas
-                .iter_mut()
-                .find(|(key, points)| {
-                    *key == name && points.iter().any(|(dy, dx)| {
-                        TRANSLATIONS.iter().any(|(_, ty, tx)| {
-                            let (ey, ex) = (ty + dy, tx + dx);
-                            ey == y && ex == x
-                        })
-                    })
-                });
-
-            match search {
-                Some((key, ref mut set)) => {
-                    set.insert((y, x));
-                },
-                None => {
-                    let mut set = HashSet::new();
-                    set.insert((y, x));
-                    areas.push((name, set));
-                }
-            }
+            vec.push_back((name, ey, ex));
         }
     }
 
@@ -205,8 +206,16 @@ fn total_fencing_cost(garden: &Garden) -> usize {
         total_fencing.push(subtotal);
     }
 
-    //println!("{:?}", total_areas);
-    //println!("{:?}", total_fencing);
+    for i in 0..total_areas.len() {
+        let (name, points) = &total_areas[i];
+        println!("A region of {} plants with price {} * {} = {}",
+            name,
+            points.len(),
+            total_fencing[i],
+            points.len() * total_fencing[i]
+        );
+    }
+
     (0..total_areas.len())
         .map(|i| (total_areas[i].1.len() * total_fencing[i]))
         .sum()
