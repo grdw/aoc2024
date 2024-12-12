@@ -165,10 +165,6 @@ fn areas(garden: &Garden) -> Vec<Area> {
         seen.insert((y, x));
     }
 
-    for (_, ref mut points) in areas.iter_mut() {
-        points.sort()
-    }
-
     areas
 }
 
@@ -227,10 +223,8 @@ fn total_fencing_cost_with_discount(garden: &Garden) -> usize {
             }
         }
 
-        let mut k = 0;
-        for n in po.values() {
-            k += cmp::min(n, &2);
-        }
+        // This is so disgusting hahaha
+        let k = po.values().map(|n| cmp::min(n, &2)).sum::<usize>();
 
         total_sides.push(k);
     }
