@@ -195,14 +195,9 @@ fn areas(garden: &Garden) -> Vec<Area> {
 fn total_fencing_cost(garden: &Garden) -> usize {
     let total_areas = areas(garden);
     let fences = fence_off(&total_areas);
-    let mut total_fencing = vec![];
-
-    for i in 0..total_areas.len() {
-        total_fencing.push(fences[i].len());
-    }
 
     (0..total_areas.len())
-        .map(|i| (total_areas[i].1.len() * total_fencing[i]))
+        .map(|i| (total_areas[i].1.len() * fences[i].len()))
         .sum()
 }
 
@@ -229,44 +224,11 @@ fn total_fencing_cost_with_discount(garden: &Garden) -> usize {
     let fences = fence_off(&total_areas);
     let mut total_sides = vec![];
 
-    for (name, points) in &total_areas {
-        println!("~~~ {:?}", name);
+    for i in 0..total_areas.len() {
         let mut subtotal = 0;
-        //let mut map = HashMap::new();
+        let mut f = &fences[i];
+        println!("{:?}", f);
 
-        println!("{:?}", points);
-
-        for (y, x) in points {
-            println!("D: {} {}", y, x);
-            for (dir, ty, tx) in &FENCE_TRANSLATIONS {
-                let (dy, dx) = (ty + y, tx + x);
-
-                //let cc = fences
-                //    .iter()
-                //    .filter(|&&(fy, fx)| fy == dy && fx == dx)
-                //    .count();
-
-                //if cc == 0 {
-                //    continue
-                //}
-
-                //map
-                //    .entry((dy, dx))
-                //    .and_modify(|n| *n += cc)
-                //    .or_insert(cc);
-            }
-
-            println!("==============");
-        }
-
-        //for ((y, x), value) in &map {
-        //    println!("{} {} {:?}", y, x, value);
-        //}
-        //println!("{:?}", corners);
-        println!("FIN == {} {:?}", name, subtotal);
-        println!("");
-        println!("");
-        println!("");
         total_sides.push(subtotal);
     }
 
