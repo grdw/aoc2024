@@ -1,28 +1,22 @@
 use std::fs;
+use std::cmp;
 use std::collections::{HashSet, HashMap, VecDeque};
 
 const TRANSLATIONS: [(char, isize, isize); 4] = [
     ('T', -2, 0),  // TOP
-    ('L', 0, -2),  // LEFT
     ('R', 0, 2),   // RIGHT
     ('B', 2, 0),   // BOTTOM
-];
-
-const FENCE_TRANSLATIONS: [(char, isize, isize); 4] = [
-    ('L', 0, -1),  // LEFT
-    ('T', -1, 0),  // TOP
-    ('R', 0, 1),   // RIGHT
-    ('B', 1, 0),   // BOTTOM
+    ('L', 0, -2),  // LEFT
 ];
 
 type RawGarden = Vec<Vec<Spot>>;
 type Point = (isize, isize);
+type DirPoint = (char, isize, isize);
 type Area = (char, Vec<Point>);
 
 #[derive(Clone, Debug)]
 enum Spot {
     Patch(char),
-    Fence,
     Empty
 }
 
@@ -84,13 +78,21 @@ impl Garden {
     }
 
     #[allow(dead_code)]
-    fn debug(&self) {
+    fn debug(&self, fences: &Vec<Vec<DirPoint>>) {
         for y in 0..self.ylen {
             for x in 0..self.xlen {
-                match self.get(y, x) {
-                    Spot::Empty => print!(" "),
-                    Spot::Fence => print!("F"),
-                    Spot::Patch(c) => print!("{}", c)
+                let s = fences
+                    .iter()
+                    .flatten()
+                    .find(|&&(_, fy, fx)| fy == y && fx == x);
+
+                if s.is_some() {
+                    print!("F");
+                } else {
+                    match self.get(y, x) {
+                        Spot::Empty => print!("."),
+                        Spot::Patch(c) => print!("{}", c)
+                    }
                 }
             }
             println!("");
@@ -112,7 +114,7 @@ fn main() {
     println!("p2 {}", total_fencing_cost_with_discount(&patch));
 }
 
-fn fence_off(areas: &Vec<Area>) -> Vec<Vec<Point>> {
+fn fence_off(areas: &Vec<Area>) -> Vec<Vec<DirPoint>> {
     let mut map = vec![];
 
     for i in 0..areas.len() {
@@ -128,10 +130,10 @@ fn fence_off(areas: &Vec<Area>) -> Vec<Vec<Point>> {
                 }
 
                 let point = match dir {
-                    'T' => (*y - 1, *x),
-                    'B' => (*y + 1, *x),
-                    'L' => (*y, *x - 1),
-                    'R' => (*y, *x + 1),
+                    'T' => (*dir, *y - 1, *x),
+                    'B' => (*dir, *y + 1, *x),
+                    'L' => (*dir, *y, *x - 1),
+                    'R' => (*dir, *y, *x + 1),
                     _ => panic!("Invaid direction"),
                 };
 
@@ -225,11 +227,34 @@ fn total_fencing_cost_with_discount(garden: &Garden) -> usize {
     let mut total_sides = vec![];
 
     for i in 0..total_areas.len() {
-        let mut subtotal = 0;
-        let mut f = &fences[i];
-        println!("{:?}", f);
+        let mut po: HashMap<Point, usize> = HashMap::new();
 
-        total_sides.push(subtotal);
+        for k in 0..fences[i].len() {
+            for l in (k + 1)..fences[i].len() {
+                let (_, ay, ax) = &fences[i][k];
+                let (_, by, bx) = &fences[i][l];
+                let (dy, dx) = ((ay - by).abs(), (ax - bx).abs());
+
+                if dy == 1 && dx == 1 {
+                    if garden.name(*ay, *bx) == ' ' {
+                        po.entry((*ay, *bx))
+                            .and_modify(|n| *n += 1)
+                            .or_insert(1);
+                    } else if garden.name(*by, *ax) == ' ' {
+                        po.entry((*by, *ax))
+                            .and_modify(|n| *n += 1)
+                            .or_insert(1);
+                    }
+                }
+            }
+        }
+
+        let mut k = 0;
+        for n in po.values() {
+            k += cmp::min(n, &2);
+        }
+
+        total_sides.push(k);
     }
 
     (0..total_areas.len())
@@ -253,4 +278,16 @@ fn test_fencing_cost_with_discount_2() {
 fn test_fencing_cost_with_discount_3() {
     let patch = parse("3");
     assert_eq!(total_fencing_cost_with_discount(&patch), 1206);
+}
+
+#[test]
+fn test_fencing_cost_with_discount_4() {
+    let patch = parse("4");
+    assert_eq!(total_fencing_cost_with_discount(&patch), 236);
+}
+
+#[test]
+fn test_fencing_cost_with_discount_5() {
+    let patch = parse("5");
+    assert_eq!(total_fencing_cost_with_discount(&patch), 368);
 }
