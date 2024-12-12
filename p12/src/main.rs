@@ -11,7 +11,6 @@ const TRANSLATIONS: [(char, isize, isize); 4] = [
 
 type RawGarden = Vec<Vec<Spot>>;
 type Point = (isize, isize);
-type DirPoint = (char, isize, isize);
 type Area = (char, Vec<Point>);
 
 #[derive(Clone, Debug)]
@@ -92,7 +91,7 @@ fn main() {
     println!("p2 {}", total_fencing_cost_with_discount(&patch));
 }
 
-fn fence_off(areas: &Vec<Area>) -> Vec<Vec<DirPoint>> {
+fn fence_off(areas: &Vec<Area>) -> Vec<Vec<Point>> {
     let mut map = vec![];
 
     for i in 0..areas.len() {
@@ -108,10 +107,10 @@ fn fence_off(areas: &Vec<Area>) -> Vec<Vec<DirPoint>> {
                 }
 
                 let point = match dir {
-                    'T' => (*dir, *y - 1, *x),
-                    'B' => (*dir, *y + 1, *x),
-                    'L' => (*dir, *y, *x - 1),
-                    'R' => (*dir, *y, *x + 1),
+                    'T' => (*y - 1, *x),
+                    'B' => (*y + 1, *x),
+                    'L' => (*y, *x - 1),
+                    'R' => (*y, *x + 1),
                     _ => panic!("Invaid direction"),
                 };
 
@@ -205,8 +204,8 @@ fn total_fencing_cost_with_discount(garden: &Garden) -> usize {
 
         for k in 0..fences[i].len() {
             for l in (k + 1)..fences[i].len() {
-                let (_, ay, ax) = &fences[i][k];
-                let (_, by, bx) = &fences[i][l];
+                let (ay, ax) = &fences[i][k];
+                let (by, bx) = &fences[i][l];
                 let (dy, dx) = ((ay - by).abs(), (ax - bx).abs());
 
                 if !(dy == 1 && dx == 1) {
