@@ -1,5 +1,5 @@
 use std::fs;
-use std::collections::{HashMap, HashSet};
+use std::collections::{HashMap, HashSet, VecDeque};
 
 const TRANSLATIONS: [(char, isize, isize); 4] = [
     ('T', -2, 0),  // TOP
@@ -16,6 +16,7 @@ const FENCE_TRANSLATIONS: [(isize, isize); 4] = [
 ];
 
 type RawGarden = Vec<Vec<Spot>>;
+type Area = (char, HashSet<(isize, isize)>);
 
 #[derive(Clone, Debug)]
 enum Spot {
@@ -145,41 +146,69 @@ fn fence_off(garden: &mut Garden) {
     for (fy, fx) in fence_points {
         garden.set(fy, fx, Spot::Fence);
     }
-
-    garden.debug()
 }
 
-fn total_fencing_cost(garden: &Garden) -> usize {
-    let mut total_area = HashMap::new();
-    let mut total_fencing = HashMap::new();
+fn areas(garden: &Garden) -> Vec<Area> {
+    let mut areas: Vec<Area> = vec![];
+    let mut vec = VecDeque::new();
+    vec.push_back((1, 1));
 
     for y in 0..garden.ylen {
         for x in 0..garden.xlen {
             let name = garden.name(y, x);
+
             if name == ' ' {
                 continue
             }
 
-            total_area
-                .entry(name)
-                .and_modify(|count| *count += 1)
-                .or_insert(1);
+            let search = areas
+                .iter_mut()
+                .find(|(key, points)| {
+                    *key == name && points.iter().any(|(dy, dx)| {
+                        TRANSLATIONS.iter().any(|(_, ty, tx)| {
+                            let (ey, ex) = (ty + dy, tx + dx);
+                            ey == y && ex == x
+                        })
+                    })
+                });
 
-            for (ty, tx) in &FENCE_TRANSLATIONS {
-                let (dy, dx) = (y + ty, x + tx);
-                if let Spot::Fence = garden.get(dy, dx) {
-                    total_fencing
-                        .entry(name)
-                        .and_modify(|count| *count += 1)
-                        .or_insert(1);
+            match search {
+                Some((key, ref mut set)) => {
+                    set.insert((y, x));
+                },
+                None => {
+                    let mut set = HashSet::new();
+                    set.insert((y, x));
+                    areas.push((name, set));
                 }
             }
         }
     }
 
-    total_area
-        .iter()
-        .map(|(key, area)| area * total_fencing[key])
+    areas
+}
+
+fn total_fencing_cost(garden: &Garden) -> usize {
+    let mut total_areas = areas(garden);
+    let mut total_fencing = vec![];
+
+    for (name, points) in &total_areas {
+        let mut subtotal = 0;
+        for (y, x) in points {
+            for (ty, tx) in &FENCE_TRANSLATIONS {
+                let (dy, dx) = (y + ty, x + tx);
+                if let Spot::Fence = garden.get(dy, dx) {
+                    subtotal += 1;
+                }
+            }
+        }
+        total_fencing.push(subtotal);
+    }
+
+    //println!("{:?}", total_areas);
+    //println!("{:?}", total_fencing);
+    (0..total_areas.len())
+        .map(|i| (total_areas[i].1.len() * total_fencing[i]))
         .sum()
 }
 
@@ -195,7 +224,10 @@ fn test_fencing_2() {
     let mut patch = parse("2");
     fence_off(&mut patch);
     assert_eq!(total_fencing_cost(&patch), 772);
+}
 
+#[test]
+fn test_fencing_3() {
     let mut patch = parse("3");
     fence_off(&mut patch);
     assert_eq!(total_fencing_cost(&patch), 1930);
