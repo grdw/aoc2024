@@ -76,28 +76,6 @@ impl Garden {
             _ => ' '
         }
     }
-
-    #[allow(dead_code)]
-    fn debug(&self, fences: &Vec<Vec<DirPoint>>) {
-        for y in 0..self.ylen {
-            for x in 0..self.xlen {
-                let s = fences
-                    .iter()
-                    .flatten()
-                    .find(|&&(_, fy, fx)| fy == y && fx == x);
-
-                if s.is_some() {
-                    print!("F");
-                } else {
-                    match self.get(y, x) {
-                        Spot::Empty => print!("."),
-                        Spot::Patch(c) => print!("{}", c)
-                    }
-                }
-            }
-            println!("");
-        }
-    }
 }
 
 fn parse(input: &'static str) -> Garden {
