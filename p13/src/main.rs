@@ -1,31 +1,9 @@
 use std::fs;
-use std::cmp::Ordering;
-use std::collections::{BinaryHeap, HashMap};
-
-const MAX_COST: usize = 400;
+use std::collections::HashMap;
 
 type Point = (usize, usize);
 type PointWithCost = (usize, usize, usize);
 type ClawMachine = (Point, Vec<PointWithCost>);
-
-#[derive(Clone, Debug, Eq, PartialEq)]
-struct State {
-    cost: usize,
-    position: Point,
-}
-
-impl Ord for State {
-    fn cmp(&self, other: &Self) -> Ordering {
-        other.cost.cmp(&self.cost)
-    }
-}
-
-// `PartialOrd` needs to be implemented as well.
-impl PartialOrd for State {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(self.cmp(other))
-    }
-}
 
 fn main() {
     let claw_machines = parse("input");
@@ -79,51 +57,11 @@ fn parse_line(line: &str) -> (usize, usize) {
 fn minimum_tokens(claw_machines: &Vec<ClawMachine>) -> usize {
     let mut total = 0;
     for (prize, buttons) in claw_machines.iter() {
-        if let Some(n) = dijkstra(prize, buttons) {
+        if let Some(n) = token_balance(prize, buttons) {
             total += n;
         }
     }
     total
-}
-
-fn dijkstra(goal: &Point, buttons: &Vec<PointWithCost>) -> Option<usize> {
-    let mut heap = BinaryHeap::new();
-    let mut dist = HashMap::new();
-    let start = (0, 0);
-
-    heap.push(State {
-        cost: 0,
-        position: start
-    });
-
-    while let Some(State { cost, position }) = heap.pop() {
-        if let Some(&visited_cost) = dist.get(&position) {
-            if cost >= visited_cost {
-                continue;
-            }
-        }
-
-        dist.insert(position, cost);
-
-        if &position == goal {
-            return Some(cost);
-        }
-
-        if cost > MAX_COST {
-            continue
-        }
-
-        for (ty, tx, tcost) in buttons {
-            let next = State {
-                cost: cost + tcost,
-                position: (position.0 + ty, position.1 + tx)
-            };
-
-            heap.push(next);
-        }
-    }
-
-    None
 }
 
 #[test]
@@ -132,3 +70,43 @@ fn test_minimum_tokens() {
 
     assert_eq!(minimum_tokens(&claw_machines), 480);
 }
+
+fn token_balance(prize: &Point, buttons: &Vec<PointWithCost>) -> Option<usize> {
+    let mut button_presses = 1;
+
+    loop {
+        let mut a = button_presses;
+
+        while a > 0 {
+            let b = button_presses - a;
+
+            let ty = (buttons[0].0 * a) + (buttons[1].0 * b);
+            let tx = (buttons[0].1 * a) + (buttons[1].1 * b);
+
+            if ty == prize.0 && tx == prize.1 {
+                return Some((buttons[0].2 * a) + (buttons[1].2 * b));
+            } else if ty > prize.0 && tx > prize.1 {
+                return None;
+            }
+
+            a -= 1;
+        }
+
+        button_presses += 1;
+    }
+
+}
+
+#[test]
+fn test_token_balance() {
+    let claw_machines = parse("1");
+
+    let (goal, points) = &claw_machines[0];
+
+    assert_eq!(token_balance(goal, points), Some(280));
+
+    let (goal, points) = &claw_machines[1];
+
+    assert_eq!(token_balance(goal, points), None);
+}
+
