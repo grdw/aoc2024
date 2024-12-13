@@ -2,6 +2,8 @@ use std::fs;
 use std::cmp::Ordering;
 use std::collections::{BinaryHeap, HashMap};
 
+const MAX_COST: usize = 400;
+
 type Point = (usize, usize);
 type PointWithName = (usize, usize, char);
 type ClawMachine = (Point, Vec<PointWithName>);
@@ -82,7 +84,6 @@ fn dijkstra(goal: &Point, buttons: &Vec<PointWithName>) -> Option<usize> {
     let mut dist = HashMap::new();
     let start = (0, 0);
 
-    let max_cost = 400;
     let costs = HashMap::from([
         ('A', 3),
         ('B', 1),
@@ -106,7 +107,7 @@ fn dijkstra(goal: &Point, buttons: &Vec<PointWithName>) -> Option<usize> {
             return Some(cost);
         }
 
-        if cost > max_cost {
+        if cost > MAX_COST {
             continue
         }
 
