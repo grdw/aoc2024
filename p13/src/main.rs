@@ -5,8 +5,8 @@ use std::collections::{BinaryHeap, HashMap};
 const MAX_COST: usize = 400;
 
 type Point = (usize, usize);
-type PointWithName = (usize, usize, char);
-type ClawMachine = (Point, Vec<PointWithName>);
+type PointWithCost = (usize, usize, usize);
+type ClawMachine = (Point, Vec<PointWithCost>);
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 struct State {
@@ -37,6 +37,11 @@ fn parse(input: &'static str) -> Vec<ClawMachine> {
     let mut claw_machines = vec![];
     let raw_input = fs::read_to_string(input).unwrap();
 
+    let costs = HashMap::from([
+        ('A', 3),
+        ('B', 1),
+    ]);
+
     for claw in raw_input.split("\n\n") {
         let mut prize = (0, 0);
         let mut buttons = vec![];
@@ -44,10 +49,12 @@ fn parse(input: &'static str) -> Vec<ClawMachine> {
             let coords = parse_line(line);
             if line.starts_with("Button") {
                 let (_, r) = line.split_once("Button ").unwrap();
+                let name = r.chars().nth(0).unwrap();
+
                 let coords_with_name = (
                     coords.0,
                     coords.1,
-                    r.chars().nth(0).unwrap()
+                    costs[&name]
                 );
 
                 buttons.push(coords_with_name);
@@ -79,15 +86,10 @@ fn minimum_tokens(claw_machines: &Vec<ClawMachine>) -> usize {
     total
 }
 
-fn dijkstra(goal: &Point, buttons: &Vec<PointWithName>) -> Option<usize> {
+fn dijkstra(goal: &Point, buttons: &Vec<PointWithCost>) -> Option<usize> {
     let mut heap = BinaryHeap::new();
     let mut dist = HashMap::new();
     let start = (0, 0);
-
-    let costs = HashMap::from([
-        ('A', 3),
-        ('B', 1),
-    ]);
 
     heap.push(State {
         cost: 0,
@@ -111,9 +113,9 @@ fn dijkstra(goal: &Point, buttons: &Vec<PointWithName>) -> Option<usize> {
             continue
         }
 
-        for (ty, tx, name) in buttons {
+        for (ty, tx, tcost) in buttons {
             let next = State {
-                cost: cost + costs[name],
+                cost: cost + tcost,
                 position: (position.0 + ty, position.1 + tx)
             };
 
