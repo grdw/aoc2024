@@ -76,8 +76,8 @@ fn test_minimum_tokens() {
 }
 
 fn token_balance(prize: &Point, buttons: &Vec<PointC>) -> Option<isize> {
-    let (ay, ax, _) = buttons[0];
-    let (by, bx, _) = buttons[1];
+    let (ay, ax, ac) = buttons[0];
+    let (by, bx, bc) = buttons[1];
     let (ty, tx) = *prize;
 
     // This is just .. what is this even supposed to mean
@@ -85,7 +85,7 @@ fn token_balance(prize: &Point, buttons: &Vec<PointC>) -> Option<isize> {
     let a = (tx - bx * b) / ax;
 
     if ax * a + bx * b == tx && ay * a + by * b == ty {
-        Some(a * 3 + b)
+        Some(a * ac + b * bc)
     } else {
         None
     }
