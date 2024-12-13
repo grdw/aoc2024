@@ -1,14 +1,16 @@
 use std::fs;
 use std::collections::HashMap;
 
-type Point = (usize, usize);
-type PointC = (usize, usize, usize);
+const ADD: isize = 10_000_000_000_000;
+
+type Point = (isize, isize);
+type PointC = (isize, isize, isize);
 type ClawMachine = (Point, Vec<PointC>);
 
 fn main() {
     let claw_machines = parse("input");
-    println!("p1: {:?}", minimum_tokens(&claw_machines));
-    //println!("Part 2: {:?}", part2("input"));
+    println!("p1: {:?}", minimum_tokens(&claw_machines, 0));
+    println!("p2: {:?}", minimum_tokens(&claw_machines, ADD));
 }
 
 fn parse(input: &'static str) -> Vec<ClawMachine> {
@@ -45,19 +47,21 @@ fn parse(input: &'static str) -> Vec<ClawMachine> {
     claw_machines
 }
 
-fn parse_line(line: &str) -> (usize, usize) {
+fn parse_line(line: &str) -> (isize, isize) {
     let mut coords = (0, 0);
     let (l, y) = line.split_once(", ").unwrap();
     let (_, x) = l.split_once(": ").unwrap();
-    coords.0 = y[2..].parse::<usize>().unwrap();
-    coords.1 = x[2..].parse::<usize>().unwrap();
+    coords.0 = y[2..].parse::<isize>().unwrap();
+    coords.1 = x[2..].parse::<isize>().unwrap();
     coords
 }
 
-fn minimum_tokens(claw_machines: &Vec<ClawMachine>) -> usize {
+fn minimum_tokens(claw_machines: &Vec<ClawMachine>, a: isize) -> isize {
     let mut total = 0;
     for (prize, buttons) in claw_machines.iter() {
-        if let Some(n) = token_balance(prize, buttons) {
+        let (y, x) = *prize;
+        let new_prize = (y + a, x + a);
+        if let Some(n) = token_balance(&new_prize, buttons) {
             total += n;
         }
     }
@@ -68,33 +72,21 @@ fn minimum_tokens(claw_machines: &Vec<ClawMachine>) -> usize {
 fn test_minimum_tokens() {
     let claw_machines = parse("1");
 
-    assert_eq!(minimum_tokens(&claw_machines), 480);
+    assert_eq!(minimum_tokens(&claw_machines, 0), 480);
 }
 
-fn token_balance(prize: &Point, buttons: &Vec<PointC>) -> Option<usize> {
-    let mut button_presses = 1;
+fn token_balance(prize: &Point, buttons: &Vec<PointC>) -> Option<isize> {
+    let (ay, ax, _) = buttons[0];
+    let (by, bx, _) = buttons[1];
+    let (ty, tx) = *prize;
 
-    loop {
-        let mut a = button_presses;
-
-        while a > 0 {
-            let b = button_presses - a;
-
-            let ty = (buttons[0].0 * a) + (buttons[1].0 * b);
-            let tx = (buttons[0].1 * a) + (buttons[1].1 * b);
-
-            if ty == prize.0 && tx == prize.1 {
-                return Some((buttons[0].2 * a) + (buttons[1].2 * b));
-            } else if ty > prize.0 && tx > prize.1 {
-                return None;
-            }
-
-            a -= 1;
-        }
-
-        button_presses += 1;
+    let b = (ax * ty - ay * tx) / (ax * by - ay * bx);
+    let a = (tx - bx * b) / ax;
+    if ax * a + bx * b == tx && ay * a + by * b == ty {
+        Some(a * 3 + b)
+    } else {
+        None
     }
-
 }
 
 #[test]
@@ -103,6 +95,10 @@ fn test_token_balance() {
 
     let (goal, points) = &claw_machines[0];
     assert_eq!(token_balance(goal, points), Some(280));
+
+    let (goal, points) = &claw_machines[0];
+    let new_goal = (goal.0 + ADD, goal.1 + ADD);
+    assert_eq!(token_balance(&new_goal, points), None);
 
     let (goal, points) = &claw_machines[1];
     assert_eq!(token_balance(goal, points), None);
