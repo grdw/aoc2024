@@ -80,8 +80,10 @@ fn token_balance(prize: &Point, buttons: &Vec<PointC>) -> Option<isize> {
     let (by, bx, _) = buttons[1];
     let (ty, tx) = *prize;
 
+    // This is just .. what is this even supposed to mean
     let b = (ax * ty - ay * tx) / (ax * by - ay * bx);
     let a = (tx - bx * b) / ax;
+
     if ax * a + bx * b == tx && ay * a + by * b == ty {
         Some(a * 3 + b)
     } else {
