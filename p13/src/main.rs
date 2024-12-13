@@ -2,8 +2,8 @@ use std::fs;
 use std::collections::HashMap;
 
 type Point = (usize, usize);
-type PointWithCost = (usize, usize, usize);
-type ClawMachine = (Point, Vec<PointWithCost>);
+type PointC = (usize, usize, usize);
+type ClawMachine = (Point, Vec<PointC>);
 
 fn main() {
     let claw_machines = parse("input");
@@ -71,7 +71,7 @@ fn test_minimum_tokens() {
     assert_eq!(minimum_tokens(&claw_machines), 480);
 }
 
-fn token_balance(prize: &Point, buttons: &Vec<PointWithCost>) -> Option<usize> {
+fn token_balance(prize: &Point, buttons: &Vec<PointC>) -> Option<usize> {
     let mut button_presses = 1;
 
     loop {
@@ -102,11 +102,9 @@ fn test_token_balance() {
     let claw_machines = parse("1");
 
     let (goal, points) = &claw_machines[0];
-
     assert_eq!(token_balance(goal, points), Some(280));
 
     let (goal, points) = &claw_machines[1];
-
     assert_eq!(token_balance(goal, points), None);
 }
 
