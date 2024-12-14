@@ -1,4 +1,5 @@
 use std::fs;
+use image::ImageBuffer;
 
 const WIDTH: i32 = 101;
 const HEIGHT: i32 = 103;
@@ -49,7 +50,9 @@ fn move_robots(robots: &mut Vec<Robot>, w: i32, h: i32) {
 }
 
 fn christmas_tree(robots: &mut Vec<Robot>, w: i32, h: i32) -> usize {
-    for t in 0..10_000 {
+    let mut t = 0;
+
+    loop {
         tick(robots, w, h);
 
         let mut neighbours = 0;
@@ -65,12 +68,33 @@ fn christmas_tree(robots: &mut Vec<Robot>, w: i32, h: i32) -> usize {
             }
         }
 
+        t += 1;
+
         if neighbours > (robots.len() / 2) {
-            return t + 1;
+            draw_tree(robots, w as u32, h as u32);
+            return t
         }
     }
+}
 
-    0
+fn draw_tree(robots: &Vec<Robot>, w: u32, h: u32) {
+    let mut imgbuf = ImageBuffer::new(w, h);
+    for y in 0..h {
+        for x in 0..w {
+            let n = robots
+                .iter()
+                .filter(|r| r.x as u32 == x && r.y as u32 == y)
+                .count();
+
+            if n == 0 { continue }
+
+            let pixel = imgbuf.get_pixel_mut(x, y);
+            let buf: [u8; 3] = [19, 168, 26];
+             *pixel = image::Rgb(buf);
+        }
+    }
+    imgbuf.save("tree.png").unwrap();
+
 }
 
 fn tick(robots: &mut Vec<Robot>, w: i32, h: i32) {
