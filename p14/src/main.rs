@@ -70,7 +70,7 @@ fn christmas_tree(robots: &mut Vec<Robot>, w: i32, h: i32) -> usize {
 
         if avg >= threshold  {
             continue
-        } else if avg < threshold {
+        } else {
             threshold = avg;
             nt = t + 1;
         }
