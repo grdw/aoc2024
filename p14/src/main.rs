@@ -60,9 +60,8 @@ fn christmas_tree(robots: &mut Vec<Robot>, w: i32, h: i32) -> usize {
             for j in (i + 1)..robots.len() {
                 let nr = &robots[i];
                 let mr = &robots[j];
-
-                distances.push((nr.x - mr.x).abs());
-                distances.push((nr.y - mr.y).abs())
+                let zr = (nr.x - mr.x).abs() * (nr.y - mr.y).abs();
+                distances.push(zr);
             }
         }
 
