@@ -1,5 +1,8 @@
 use std::fs;
+use std::fs::File;
 use std::{thread, time};
+use std::io::{BufRead, BufReader, Write};
+use image::{GenericImageView, ImageBuffer};
 
 const WIDTH: i16 = 101;
 const HEIGHT: i16 = 103;
@@ -58,9 +61,9 @@ fn move_robots(robots: &mut Vec<Robot>, w: i16, h: i16) {
 }
 
 fn move_robots_slowly(robots: &mut Vec<Robot>, w: i16, h: i16) {
-    let time = time::Duration::from_millis(5000);
+    for t in 0..10_000 {
+        let mut imgbuf = ImageBuffer::new(w as u32, h as u32);
 
-    for t in 0..TIME {
         for robot in robots.iter_mut() {
             robot.x += robot.vx;
             robot.y += robot.vy;
@@ -78,17 +81,17 @@ fn move_robots_slowly(robots: &mut Vec<Robot>, w: i16, h: i16) {
                     .filter(&&|r: &&Robot| r.y == y && r.x == x)
                     .count();
 
+                let pixel = imgbuf.get_pixel_mut(x as u32, y as u32);
                 if c > 0 {
-                    print!("🟥");
+                    let buf: [u16; 3] = [0, 0, 0];
+                    *pixel = image::Rgb(buf);
                 } else {
-                    print!("⬜");
+                    let buf: [u16; 3] = [255, 255, 255];
+                    *pixel = image::Rgb(buf);
                 }
             }
-            println!("\n");
         }
-        println!("at {}", t);
-        println!("\n");
-        println!("\n");
+        imgbuf.save(format!("{}.png", t)).unwrap();
     }
 }
 
