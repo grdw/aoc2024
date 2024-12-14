@@ -52,18 +52,20 @@ fn christmas_tree(robots: &mut Vec<Robot>, w: i32, h: i32) -> usize {
     for t in 0..10_000 {
         tick(robots, w, h);
 
-        let mut distances = vec![];
+        let mut neighbours = 0;
+
         for i in 0..robots.len() {
             for j in (i + 1)..robots.len() {
                 let nr = &robots[i];
                 let mr = &robots[j];
                 let zr = (nr.x - mr.x).abs() * (nr.y - mr.y).abs();
-                distances.push(zr);
+                if zr == 1 {
+                    neighbours += 1;
+                }
             }
         }
 
-        let ones = distances.iter().filter(|&&n| n == 1).count();
-        if ones > (robots.len() / 2) {
+        if neighbours > (robots.len() / 2) {
             return t + 1;
         }
     }
