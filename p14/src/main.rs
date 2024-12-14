@@ -1,4 +1,5 @@
 use std::fs;
+use std::{thread, time};
 
 const WIDTH: i16 = 101;
 const HEIGHT: i16 = 103;
@@ -14,7 +15,10 @@ struct Robot {
 
 fn main() {
     let mut robots = parse("input");
-    println!("p1 {}", robot_positions(&mut robots, WIDTH, HEIGHT));
+    move_robots(&mut robots, WIDTH, HEIGHT);
+    println!("p1 {}", quadrant_product(&robots, WIDTH, HEIGHT));
+    let mut robots = parse("input");
+    move_robots_slowly(&mut robots, WIDTH, HEIGHT);
 }
 
 fn parse(input: &'static str) -> Vec<Robot> {
@@ -37,7 +41,7 @@ fn parse_point(input: &str) -> (i16, i16) {
     (x, y)
 }
 
-fn robot_positions(robots: &mut Vec<Robot>, w: i16, h: i16) -> usize {
+fn move_robots(robots: &mut Vec<Robot>, w: i16, h: i16) {
     for _ in 0..TIME {
         for robot in robots.iter_mut() {
             robot.x += robot.vx;
@@ -51,7 +55,44 @@ fn robot_positions(robots: &mut Vec<Robot>, w: i16, h: i16) -> usize {
         robot.x = nx;
         robot.y = ny;
     }
+}
 
+fn move_robots_slowly(robots: &mut Vec<Robot>, w: i16, h: i16) {
+    let time = time::Duration::from_millis(5000);
+
+    for t in 0..TIME {
+        for robot in robots.iter_mut() {
+            robot.x += robot.vx;
+            robot.y += robot.vy;
+
+            let nx = robot.x.rem_euclid(w);
+            let ny = robot.y.rem_euclid(h);
+            robot.x = nx;
+            robot.y = ny;
+        }
+
+        for y in 0..h {
+            for x in 0..w {
+                let c = robots
+                    .iter()
+                    .filter(&&|r: &&Robot| r.y == y && r.x == x)
+                    .count();
+
+                if c > 0 {
+                    print!("🟥");
+                } else {
+                    print!("⬜");
+                }
+            }
+            println!("\n");
+        }
+        println!("at {}", t);
+        println!("\n");
+        println!("\n");
+    }
+}
+
+fn quadrant_product(robots: &Vec<Robot>, w: i16, h: i16) -> usize {
     let hh = h / 2;
     let wh = w / 2;
     let mut quadrants = vec![0; 4];
@@ -89,6 +130,7 @@ fn robot_positions(robots: &mut Vec<Robot>, w: i16, h: i16) -> usize {
 #[test]
 fn test_robot_positions() {
     let mut robots = parse("1");
-    assert_eq!(robot_positions(&mut robots, 11, 7), 12);
+    move_robots_slowly(&mut robots, 11, 7);
+    assert_eq!(quadrant_product(&robots, 11, 7), 12);
 
 }
