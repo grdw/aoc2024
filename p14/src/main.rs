@@ -1,8 +1,4 @@
 use std::fs;
-use std::fs::File;
-use std::{thread, time};
-use std::io::{BufRead, BufReader, Write};
-use image::{GenericImageView, ImageBuffer};
 
 const WIDTH: i16 = 101;
 const HEIGHT: i16 = 103;
@@ -21,7 +17,8 @@ fn main() {
     move_robots(&mut robots, WIDTH, HEIGHT);
     println!("p1 {}", quadrant_product(&robots, WIDTH, HEIGHT));
     let mut robots = parse("input");
-    move_robots_slowly(&mut robots, WIDTH, HEIGHT);
+    let n = move_robots_slowly(&mut robots, WIDTH, HEIGHT);
+    println!("p2 {}", n);
 }
 
 fn parse(input: &'static str) -> Vec<Robot> {
@@ -49,50 +46,51 @@ fn move_robots(robots: &mut Vec<Robot>, w: i16, h: i16) {
         for robot in robots.iter_mut() {
             robot.x += robot.vx;
             robot.y += robot.vy;
-        }
-    }
 
-    for robot in robots.iter_mut() {
-        let nx = robot.x.rem_euclid(w);
-        let ny = robot.y.rem_euclid(h);
-        robot.x = nx;
-        robot.y = ny;
+            robot.x = robot.x.rem_euclid(w);
+            robot.y = robot.y.rem_euclid(h);
+        }
     }
 }
 
-fn move_robots_slowly(robots: &mut Vec<Robot>, w: i16, h: i16) {
-    for t in 0..10_000 {
-        let mut imgbuf = ImageBuffer::new(w as u32, h as u32);
+fn move_robots_slowly(robots: &mut Vec<Robot>, w: i16, h: i16) -> usize {
+    let mut nt = 0;
+    let mut threshold = i32::MAX;
 
+    for t in 0..10_000 {
         for robot in robots.iter_mut() {
             robot.x += robot.vx;
             robot.y += robot.vy;
 
-            let nx = robot.x.rem_euclid(w);
-            let ny = robot.y.rem_euclid(h);
-            robot.x = nx;
-            robot.y = ny;
+            robot.x = robot.x.rem_euclid(w);
+            robot.y = robot.y.rem_euclid(h);
         }
 
-        for y in 0..h {
-            for x in 0..w {
-                let c = robots
-                    .iter()
-                    .filter(&&|r: &&Robot| r.y == y && r.x == x)
-                    .count();
+        let mut distances = vec![];
+        for i in 0..robots.len() {
+            for j in (i + 1)..robots.len() {
+                let nr = &robots[i];
+                let mr = &robots[j];
 
-                let pixel = imgbuf.get_pixel_mut(x as u32, y as u32);
-                if c > 0 {
-                    let buf: [u16; 3] = [0, 0, 0];
-                    *pixel = image::Rgb(buf);
-                } else {
-                    let buf: [u16; 3] = [255, 255, 255];
-                    *pixel = image::Rgb(buf);
-                }
+                distances.push((nr.x - mr.x).abs() as i32);
+                distances.push((nr.y - mr.y).abs() as i32)
             }
         }
-        imgbuf.save(format!("{}.png", t)).unwrap();
+
+        let sum: i32 = distances.iter().sum();
+        let avg = sum / (distances.len() as i32);
+
+        if avg >= threshold  {
+            continue
+        }
+
+        if avg < threshold {
+            threshold = avg;
+            nt = t + 1;
+        }
     }
+
+    return nt
 }
 
 fn quadrant_product(robots: &Vec<Robot>, w: i16, h: i16) -> usize {
