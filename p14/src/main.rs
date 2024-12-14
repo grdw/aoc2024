@@ -1,16 +1,16 @@
 use std::fs;
 use image::ImageBuffer;
 
-const WIDTH: i32 = 101;
-const HEIGHT: i32 = 103;
+const WIDTH: i16 = 101;
+const HEIGHT: i16 = 103;
 const TIME: usize = 100;
 
 #[derive(Debug)]
 struct Robot {
-    x: i32,
-    y: i32,
-    vx: i32,
-    vy: i32
+    x: i16,
+    y: i16,
+    vx: i16,
+    vy: i16
 }
 
 fn main() {
@@ -34,22 +34,22 @@ fn parse(input: &'static str) -> Vec<Robot> {
     robots
 }
 
-fn parse_point(input: &str) -> (i32, i32) {
+fn parse_point(input: &str) -> (i16, i16) {
     let (_, r) = input.split_once("=").unwrap();
     let (xr, yr) = r.split_once(",").unwrap();
-    let x = xr.parse::<i32>().unwrap();
-    let y = yr.parse::<i32>().unwrap();
+    let x = xr.parse::<i16>().unwrap();
+    let y = yr.parse::<i16>().unwrap();
 
     (x, y)
 }
 
-fn move_robots(robots: &mut Vec<Robot>, w: i32, h: i32) {
+fn move_robots(robots: &mut Vec<Robot>, w: i16, h: i16) {
     for _ in 0..TIME {
         tick(robots, w, h);
     }
 }
 
-fn christmas_tree(robots: &mut Vec<Robot>, w: i32, h: i32) -> usize {
+fn christmas_tree(robots: &mut Vec<Robot>, w: i16, h: i16) -> usize {
     let mut t = 0;
 
     loop {
@@ -61,7 +61,7 @@ fn christmas_tree(robots: &mut Vec<Robot>, w: i32, h: i32) -> usize {
             for j in (i + 1)..robots.len() {
                 let ar = &robots[i];
                 let br = &robots[j];
-                let dr = (ar.x - br.x).abs() * (ar.y - br.y).abs();
+                let dr = (ar.x - br.x).abs() + (ar.y - br.y).abs();
                 if dr == 1 {
                     neighbours += 1;
                 }
@@ -97,7 +97,7 @@ fn draw_tree(robots: &Vec<Robot>, w: u32, h: u32) {
 
 }
 
-fn tick(robots: &mut Vec<Robot>, w: i32, h: i32) {
+fn tick(robots: &mut Vec<Robot>, w: i16, h: i16) {
     for robot in robots.iter_mut() {
         robot.x += robot.vx;
         robot.y += robot.vy;
@@ -107,7 +107,7 @@ fn tick(robots: &mut Vec<Robot>, w: i32, h: i32) {
     }
 }
 
-fn quadrant_product(robots: &Vec<Robot>, w: i32, h: i32) -> usize {
+fn quadrant_product(robots: &Vec<Robot>, w: i16, h: i16) -> usize {
     let hh = h / 2;
     let wh = w / 2;
     let mut quadrants = vec![0; 4];
