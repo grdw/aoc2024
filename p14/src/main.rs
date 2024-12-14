@@ -49,9 +49,6 @@ fn move_robots(robots: &mut Vec<Robot>, w: i32, h: i32) {
 }
 
 fn christmas_tree(robots: &mut Vec<Robot>, w: i32, h: i32) -> usize {
-    let mut nt = 0;
-    let mut threshold = i32::MAX;
-
     for t in 0..10_000 {
         tick(robots, w, h);
 
@@ -65,18 +62,13 @@ fn christmas_tree(robots: &mut Vec<Robot>, w: i32, h: i32) -> usize {
             }
         }
 
-        let sum: i32 = distances.iter().sum();
-        let avg = sum / (distances.len() as i32);
-
-        if avg >= threshold  {
-            continue
-        } else {
-            threshold = avg;
-            nt = t + 1;
+        let ones = distances.iter().filter(|&&n| n == 1).count();
+        if ones > (robots.len() / 2) {
+            return t + 1;
         }
     }
 
-    nt
+    0
 }
 
 fn tick(robots: &mut Vec<Robot>, w: i32, h: i32) {
