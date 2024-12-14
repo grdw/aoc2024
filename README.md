@@ -1,11 +1,11 @@
-### AOC2024
+# AOC2024
 
 ```
 rustc 1.83.0
 cargo 1.83.0
 ```
 
-#### Timings
+## Timings
 
 To time it do:
 
