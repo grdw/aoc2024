@@ -1,23 +1,24 @@
 use std::fs;
 
-const WIDTH: i16 = 101;
-const HEIGHT: i16 = 103;
+const WIDTH: i32 = 101;
+const HEIGHT: i32 = 103;
 const TIME: usize = 100;
 
 #[derive(Debug)]
 struct Robot {
-    x: i16,
-    y: i16,
-    vx: i16,
-    vy: i16
+    x: i32,
+    y: i32,
+    vx: i32,
+    vy: i32
 }
 
 fn main() {
     let mut robots = parse("input");
     move_robots(&mut robots, WIDTH, HEIGHT);
     println!("p1 {}", quadrant_product(&robots, WIDTH, HEIGHT));
+
     let mut robots = parse("input");
-    let n = move_robots_slowly(&mut robots, WIDTH, HEIGHT);
+    let n = christmas_tree(&mut robots, WIDTH, HEIGHT);
     println!("p2 {}", n);
 }
 
@@ -32,39 +33,27 @@ fn parse(input: &'static str) -> Vec<Robot> {
     robots
 }
 
-fn parse_point(input: &str) -> (i16, i16) {
+fn parse_point(input: &str) -> (i32, i32) {
     let (_, r) = input.split_once("=").unwrap();
     let (xr, yr) = r.split_once(",").unwrap();
-    let x = xr.parse::<i16>().unwrap();
-    let y = yr.parse::<i16>().unwrap();
+    let x = xr.parse::<i32>().unwrap();
+    let y = yr.parse::<i32>().unwrap();
 
     (x, y)
 }
 
-fn move_robots(robots: &mut Vec<Robot>, w: i16, h: i16) {
+fn move_robots(robots: &mut Vec<Robot>, w: i32, h: i32) {
     for _ in 0..TIME {
-        for robot in robots.iter_mut() {
-            robot.x += robot.vx;
-            robot.y += robot.vy;
-
-            robot.x = robot.x.rem_euclid(w);
-            robot.y = robot.y.rem_euclid(h);
-        }
+        tick(robots, w, h);
     }
 }
 
-fn move_robots_slowly(robots: &mut Vec<Robot>, w: i16, h: i16) -> usize {
+fn christmas_tree(robots: &mut Vec<Robot>, w: i32, h: i32) -> usize {
     let mut nt = 0;
     let mut threshold = i32::MAX;
 
     for t in 0..10_000 {
-        for robot in robots.iter_mut() {
-            robot.x += robot.vx;
-            robot.y += robot.vy;
-
-            robot.x = robot.x.rem_euclid(w);
-            robot.y = robot.y.rem_euclid(h);
-        }
+        tick(robots, w, h);
 
         let mut distances = vec![];
         for i in 0..robots.len() {
@@ -72,8 +61,8 @@ fn move_robots_slowly(robots: &mut Vec<Robot>, w: i16, h: i16) -> usize {
                 let nr = &robots[i];
                 let mr = &robots[j];
 
-                distances.push((nr.x - mr.x).abs() as i32);
-                distances.push((nr.y - mr.y).abs() as i32)
+                distances.push((nr.x - mr.x).abs());
+                distances.push((nr.y - mr.y).abs())
             }
         }
 
@@ -82,18 +71,26 @@ fn move_robots_slowly(robots: &mut Vec<Robot>, w: i16, h: i16) -> usize {
 
         if avg >= threshold  {
             continue
-        }
-
-        if avg < threshold {
+        } else if avg < threshold {
             threshold = avg;
             nt = t + 1;
         }
     }
 
-    return nt
+    nt
 }
 
-fn quadrant_product(robots: &Vec<Robot>, w: i16, h: i16) -> usize {
+fn tick(robots: &mut Vec<Robot>, w: i32, h: i32) {
+    for robot in robots.iter_mut() {
+        robot.x += robot.vx;
+        robot.y += robot.vy;
+
+        robot.x = robot.x.rem_euclid(w);
+        robot.y = robot.y.rem_euclid(h);
+    }
+}
+
+fn quadrant_product(robots: &Vec<Robot>, w: i32, h: i32) -> usize {
     let hh = h / 2;
     let wh = w / 2;
     let mut quadrants = vec![0; 4];
@@ -131,7 +128,7 @@ fn quadrant_product(robots: &Vec<Robot>, w: i16, h: i16) -> usize {
 #[test]
 fn test_robot_positions() {
     let mut robots = parse("1");
-    move_robots_slowly(&mut robots, 11, 7);
+    move_robots(&mut robots, 11, 7);
     assert_eq!(quadrant_product(&robots, 11, 7), 12);
 
 }
