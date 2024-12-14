@@ -18,7 +18,7 @@ cargo build --release; time ./target/release pX
 | # | Name  | CPU                           | Memory |
 | - | ----- | ----------------------------- | ------ |
 | 1 | UX430 | Intel i7-7500U (4) @ 3.500GHz | 8 GB   |
-| 2 |
+| 2 |       |                               |        |
 
 **For both part 1 and part 2:**
 
