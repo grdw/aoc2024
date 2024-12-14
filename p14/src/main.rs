@@ -147,5 +147,4 @@ fn test_robot_positions() {
     let mut robots = parse("1");
     move_robots(&mut robots, 11, 7);
     assert_eq!(quadrant_product(&robots, 11, 7), 12);
-
 }
