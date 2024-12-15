@@ -1,5 +1,5 @@
 use std::fs;
-use std::collections::{HashSet, VecDeque};
+use std::collections::VecDeque;
 
 type RawGrid = Vec<Vec<char>>;
 
@@ -23,56 +23,47 @@ impl Grid {
         y: isize,
         x: isize) -> (isize, isize) {
 
-        let (ty, tx) = match d {
-            '<' => (0, -1),
-            '>' => (0, 1),
-            '^' => (-1, 0),
-            'v' => (1, 0),
-            _ => return (y, x),
-        };
-
+        let (ty, tx) = Self::translation(d);
         let ny = y + ty;
         let nx = x + tx;
         let c = self.get(ny, nx);
+
+        if c == '#' || d == '\n' {
+            return (y, x);
+        }
 
         if c == '.' {
             self.swap(y, x, ny, nx);
             return (ny, nx)
         }
 
-        if c == '#' {
-            return (y, x);
-        }
-
         let mut coords = vec![];
         let mut positions = VecDeque::new();
-        let mut seen = HashSet::new();
         positions.push_front((ny, nx));
 
         while let Some((dy, dx)) = positions.pop_front() {
-            if seen.contains(&(dy, dx)) {
+            if coords.contains(&(dy, dx)) {
                 continue
             }
 
             let (tty, ttx) = (dy + ty, dx + tx);
+            let c = self.get(dy, dx);
 
-            match self.get(dy, dx) {
-                ']' => {
-                    coords.push((dy, dx));
-                    positions.push_front((dy, dx - 1));
-                    positions.push_back((tty, ttx));
-                }
-                '[' => {
-                    coords.push((dy, dx));
-                    positions.push_front((dy, dx + 1));
-                    positions.push_back((tty, ttx));
-                },
-                '.' => (),
-                '#' => (),
-                _ => panic!("MAY CHAOS RULE THE WORLD!")
+            if c != ']' && c != '[' {
+                continue
             }
 
-            seen.insert((dy, dx));
+            let ex = if c == ']' {
+                -1
+            } else if c == '[' {
+                1
+            } else {
+                0
+            };
+
+            coords.push((dy, dx));
+            positions.push_back((tty, ttx));
+            positions.push_front((dy, dx + ex));
         }
 
         if coords.iter().any(|(cy, cx)| self.get(cy + ty, cx + tx) == '#') {
@@ -88,14 +79,18 @@ impl Grid {
         (ny, nx)
     }
 
-    fn move_node(&mut self, d: char, y: isize, x: isize) -> (isize, isize) {
-        let (ty, tx) = match d {
+    fn translation(d: char) -> (isize, isize) {
+        match d {
             '<' => (0, -1),
             '>' => (0, 1),
             '^' => (-1, 0),
             'v' => (1, 0),
-            _ => return (y, x),
-        };
+            _   => (0, 0)
+        }
+    }
+
+    fn move_node(&mut self, d: char, y: isize, x: isize) -> (isize, isize) {
+        let (ty, tx) = Self::translation(d);
 
         let ny = y + ty;
         let nx = x + tx;
@@ -114,16 +109,16 @@ impl Grid {
                 oy += ty;
                 ox += tx;
 
-                match self.get(oy, ox) {
-                    '.' => {
-                        self.swap(ny, nx, oy, ox);
-                        break;
-                    },
-                    'O' => continue,
-                    '#' => return (y, x),
-                    _ => panic!("Invalid character")
+                let c = self.get(oy, ox);
+
+                if c == '#' {
+                    return (y, x);
+                } else if c == '.' {
+                    self.swap(ny, nx, oy, ox);
+                    break;
                 }
             }
+
             self.swap(y, x, ny, nx);
             return (ny, nx);
         }
