@@ -193,6 +193,7 @@ fn move_boxes(grid: &mut Grid, directions: &String) -> isize {
 fn test_move_boxes() {
     let (mut grid, directions) = parse("2");
     assert_eq!(move_boxes(&mut grid, &directions), 2028);
+
     let (mut grid, directions) = parse("1");
     assert_eq!(move_boxes(&mut grid, &directions), 10092)
 }
