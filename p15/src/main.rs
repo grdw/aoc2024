@@ -16,9 +16,8 @@ impl Grid {
         Grid {vector, ylen, xlen}
     }
 
-    fn move_node(&mut self, direction: char, y: isize, x: isize) -> (isize, isize) {
-
-        let (ty, tx) = match direction {
+    fn move_node(&mut self, d: char, y: isize, x: isize) -> (isize, isize) {
+        let (ty, tx) = match d {
             '<' => (0, -1),
             '>' => (0, 1),
             '^' => (-1, 0),
@@ -37,9 +36,11 @@ impl Grid {
             'O' => {
                 let mut oy = ny;
                 let mut ox = nx;
+
                 loop {
                     oy += ty;
                     ox += tx;
+
                     match self.get(oy, ox) {
                         '.' => {
                             self.swap(ny, nx, oy, ox);
@@ -120,7 +121,6 @@ fn move_boxes(grid: &mut Grid, directions: &String) -> isize {
         starty = ty;
         startx = tx;
     }
-    grid.debug();
 
     let mut subtotal = 0;
     for y in 0..grid.ylen {
