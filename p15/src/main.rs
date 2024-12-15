@@ -99,38 +99,36 @@ impl Grid {
 
         let ny = y + ty;
         let nx = x + tx;
+        let c = self.get(ny, nx);
 
-        match self.get(ny, nx) {
-            '.' => {
-                self.swap(y, x, ny, nx);
-                (ny, nx)
-            },
-            'O' => {
-                let mut oy = ny;
-                let mut ox = nx;
-
-                loop {
-                    oy += ty;
-                    ox += tx;
-
-                    match self.get(oy, ox) {
-                        '.' => {
-                            self.swap(ny, nx, oy, ox);
-                            break;
-                        },
-                        'O' => continue,
-                        '#' => return (y, x),
-                        _ => panic!("Invalid character")
-                    }
-                }
-                self.swap(y, x, ny, nx);
-                (ny, nx)
-            },
-            '#' => (y, x),
-            _ => {
-                panic!("Invalid character")
-            }
+        if c == '.' {
+            self.swap(y, x, ny, nx);
+            return (ny, nx)
         }
+
+        if c == 'O' {
+            let mut oy = ny;
+            let mut ox = nx;
+
+            loop {
+                oy += ty;
+                ox += tx;
+
+                match self.get(oy, ox) {
+                    '.' => {
+                        self.swap(ny, nx, oy, ox);
+                        break;
+                    },
+                    'O' => continue,
+                    '#' => return (y, x),
+                    _ => panic!("Invalid character")
+                }
+            }
+            self.swap(y, x, ny, nx);
+            return (ny, nx);
+        }
+
+        return (y, x)
     }
 
     fn get(&self, y: isize, x: isize) -> char {
@@ -196,19 +194,7 @@ fn move_boxes(grid: &mut Grid, directions: &String) -> isize {
         startx = tx;
     }
 
-    let mut subtotal = 0;
-    for y in 0..grid.ylen {
-        for x in 0..grid.xlen {
-            if grid.get(y, x) != 'O' {
-               continue
-            }
-
-            subtotal += 100 * y + x;
-        }
-
-    }
-
-    subtotal
+    total(&grid, 'O')
 }
 
 #[test]
@@ -249,10 +235,14 @@ fn move_boxes_expanded(grid: &mut Grid, directions: &String) -> isize {
         startx = tx;
     }
 
+    total(&grid, '[')
+}
+
+fn total(grid: &Grid, search: char) -> isize {
     let mut subtotal = 0;
     for y in 0..grid.ylen {
         for x in 0..grid.xlen {
-            if grid.get(y, x) != '[' {
+            if grid.get(y, x) != search {
                continue
             }
 
