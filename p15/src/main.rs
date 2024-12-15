@@ -17,6 +17,53 @@ impl Grid {
         Grid {vector, ylen, xlen}
     }
 
+    fn translation(d: char) -> (isize, isize) {
+        match d {
+            '<' => (0, -1),
+            '>' => (0, 1),
+            '^' => (-1, 0),
+            'v' => (1, 0),
+            _   => (0, 0)
+        }
+    }
+
+    fn move_node(&mut self, d: char, y: isize, x: isize) -> (isize, isize) {
+        let (ty, tx) = Self::translation(d);
+
+        let ny = y + ty;
+        let nx = x + tx;
+        let c = self.get(ny, nx);
+
+        if c == '.' {
+            self.swap(y, x, ny, nx);
+            return (ny, nx)
+        }
+
+        if c == 'O' {
+            let mut oy = ny;
+            let mut ox = nx;
+
+            loop {
+                oy += ty;
+                ox += tx;
+
+                let c = self.get(oy, ox);
+
+                if c == '#' {
+                    return (y, x);
+                } else if c == '.' {
+                    self.swap(ny, nx, oy, ox);
+                    break;
+                }
+            }
+
+            self.swap(y, x, ny, nx);
+            return (ny, nx);
+        }
+
+        return (y, x)
+    }
+
     fn move_nodes(&mut self, d: char, y: isize, x: isize) -> (isize, isize) {
         let (ty, tx) = Self::translation(d);
         let ny = y + ty;
@@ -77,53 +124,6 @@ impl Grid {
         (ny, nx)
     }
 
-    fn translation(d: char) -> (isize, isize) {
-        match d {
-            '<' => (0, -1),
-            '>' => (0, 1),
-            '^' => (-1, 0),
-            'v' => (1, 0),
-            _   => (0, 0)
-        }
-    }
-
-    fn move_node(&mut self, d: char, y: isize, x: isize) -> (isize, isize) {
-        let (ty, tx) = Self::translation(d);
-
-        let ny = y + ty;
-        let nx = x + tx;
-        let c = self.get(ny, nx);
-
-        if c == '.' {
-            self.swap(y, x, ny, nx);
-            return (ny, nx)
-        }
-
-        if c == 'O' {
-            let mut oy = ny;
-            let mut ox = nx;
-
-            loop {
-                oy += ty;
-                ox += tx;
-
-                let c = self.get(oy, ox);
-
-                if c == '#' {
-                    return (y, x);
-                } else if c == '.' {
-                    self.swap(ny, nx, oy, ox);
-                    break;
-                }
-            }
-
-            self.swap(y, x, ny, nx);
-            return (ny, nx);
-        }
-
-        return (y, x)
-    }
-
     fn get(&self, y: isize, x: isize) -> char {
         self.vector[y as usize][x as usize]
     }
@@ -148,6 +148,27 @@ impl Grid {
         panic!("No robot found")
     }
 
+    fn expand(&self) -> Grid {
+        let mut input = vec![];
+        for y in 0..self.ylen {
+            let mut row = vec![];
+            for x in 0..self.xlen {
+                let mut appendix = match self.get(y, x) {
+                    '#' => vec!['#', '#'],
+                    'O' => vec!['[', ']'],
+                    '.' => vec!['.', '.'],
+                    '@' => vec!['@', '.'],
+                    _ => panic!("Invalid character")
+                };
+
+                row.append(&mut appendix);
+            }
+            input.push(row);
+        }
+
+        Grid::new(input)
+    }
+
     #[allow(dead_code)]
     fn debug(&self) {
         for y in 0..self.ylen {
@@ -161,7 +182,7 @@ impl Grid {
 
 fn main() {
     let (mut grid, directions) = parse("input");
-    let mut expanded_grid = expand(&grid);
+    let mut expanded_grid = grid.expand();
 
     println!("p1 {}", move_boxes(&mut grid, &directions));
     println!("p2 {}", move_boxes_expanded(&mut expanded_grid, &directions));
@@ -198,27 +219,6 @@ fn test_move_boxes() {
     assert_eq!(move_boxes(&mut grid, &directions), 10092)
 }
 
-fn expand(grid: &Grid) -> Grid {
-    let mut input = vec![];
-    for y in 0..grid.ylen {
-        let mut row = vec![];
-        for x in 0..grid.xlen {
-            let mut appendix = match grid.get(y, x) {
-                '#' => vec!['#', '#'],
-                'O' => vec!['[', ']'],
-                '.' => vec!['.', '.'],
-                '@' => vec!['@', '.'],
-                _ => panic!("Invalid character")
-            };
-
-            row.append(&mut appendix);
-        }
-        input.push(row);
-    }
-
-    Grid::new(input)
-}
-
 fn move_boxes_expanded(grid: &mut Grid, directions: &String) -> isize {
     let (mut starty, mut startx) = grid.robot();
 
@@ -250,10 +250,10 @@ fn total(grid: &Grid, search: char) -> isize {
 #[test]
 fn test_move_boxes_expanded() {
     let (grid, directions) = parse("3");
-    let mut expanded_grid = expand(&grid);
+    let mut expanded_grid = grid.expand();
     assert_eq!(move_boxes_expanded(&mut expanded_grid, &directions), 618);
 
     let (grid, directions) = parse("1");
-    let mut expanded_grid = expand(&grid);
+    let mut expanded_grid = grid.expand();
     assert_eq!(move_boxes_expanded(&mut expanded_grid, &directions), 9021);
 }
