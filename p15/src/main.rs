@@ -184,8 +184,8 @@ fn main() {
     let (mut grid, directions) = parse("input");
     let mut expanded_grid = grid.expand();
 
-    println!("p1 {}", move_boxes(&mut grid, &directions));
-    println!("p2 {}", move_boxes_expanded(&mut expanded_grid, &directions));
+    println!("p1 {}", move_boxes(&mut grid, &directions, 'O'));
+    println!("p2 {}", move_boxes(&mut expanded_grid, &directions, '['));
 }
 
 fn parse(input: &'static str) -> (Grid, String) {
@@ -198,62 +198,38 @@ fn parse(input: &'static str) -> (Grid, String) {
     (Grid::new(vector), String::from(directions.trim()))
 }
 
-fn move_boxes(grid: &mut Grid, directions: &String) -> isize {
+fn move_boxes(grid: &mut Grid, dir: &String, search: char) -> isize {
     let (mut starty, mut startx) = grid.robot();
 
-    for d in directions.chars() {
-        let (ty, tx) = grid.move_node(d, starty, startx);
-        starty = ty;
-        startx = tx;
+    for d in dir.chars() {
+        (starty, startx) = if search == 'O' {
+            grid.move_node(d, starty, startx)
+        } else {
+            grid.move_nodes(d, starty, startx)
+        };
     }
 
-    total(&grid, 'O')
+    (0..grid.ylen).map(|y| {
+        (0..grid.xlen)
+            .filter(|&x| grid.get(y, x) == search)
+            .map(|x| 100 * y + x)
+            .sum::<isize>()
+    }).sum()
 }
 
 #[test]
 fn test_move_boxes() {
     let (mut grid, directions) = parse("2");
-    assert_eq!(move_boxes(&mut grid, &directions), 2028);
+    assert_eq!(move_boxes(&mut grid, &directions, 'O'), 2028);
 
     let (mut grid, directions) = parse("1");
-    assert_eq!(move_boxes(&mut grid, &directions), 10092)
-}
+    assert_eq!(move_boxes(&mut grid, &directions, 'O'), 10092);
 
-fn move_boxes_expanded(grid: &mut Grid, directions: &String) -> isize {
-    let (mut starty, mut startx) = grid.robot();
-
-    for d in directions.chars() {
-        let (ty, tx) = grid.move_nodes(d, starty, startx);
-        starty = ty;
-        startx = tx;
-    }
-
-    total(&grid, '[')
-}
-
-fn total(grid: &Grid, search: char) -> isize {
-    let mut subtotal = 0;
-    for y in 0..grid.ylen {
-        for x in 0..grid.xlen {
-            if grid.get(y, x) != search {
-               continue
-            }
-
-            subtotal += 100 * y + x;
-        }
-
-    }
-
-    subtotal
-}
-
-#[test]
-fn test_move_boxes_expanded() {
     let (grid, directions) = parse("3");
     let mut expanded_grid = grid.expand();
-    assert_eq!(move_boxes_expanded(&mut expanded_grid, &directions), 618);
+    assert_eq!(move_boxes(&mut expanded_grid, &directions, '['), 618);
 
     let (grid, directions) = parse("1");
     let mut expanded_grid = grid.expand();
-    assert_eq!(move_boxes_expanded(&mut expanded_grid, &directions), 9021);
+    assert_eq!(move_boxes(&mut expanded_grid, &directions, '['), 9021);
 }
