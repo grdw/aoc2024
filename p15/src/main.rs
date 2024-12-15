@@ -17,12 +17,7 @@ impl Grid {
         Grid {vector, ylen, xlen}
     }
 
-    fn move_expanded_node(
-        &mut self,
-        d: char,
-        y: isize,
-        x: isize) -> (isize, isize) {
-
+    fn move_nodes(&mut self, d: char, y: isize, x: isize) -> (isize, isize) {
         let (ty, tx) = Self::translation(d);
         let ny = y + ty;
         let nx = x + tx;
@@ -66,8 +61,11 @@ impl Grid {
             positions.push_front((dy, dx + ex));
         }
 
-        if coords.iter().any(|(cy, cx)| self.get(cy + ty, cx + tx) == '#') {
-            return (y, x);
+        // Test if any of the moves ends up in a wall
+        for (my, mx) in coords.iter() {
+            if self.get(my + ty, mx + tx) == '#' {
+                return (y, x);
+            }
         }
 
         for (my, mx) in coords.iter().rev() {
@@ -172,7 +170,6 @@ fn main() {
 fn parse(input: &'static str) -> (Grid, String) {
     let raw = fs::read_to_string(input).unwrap();
     let (grid, directions) = raw.split_once("\n\n").unwrap();
-
     let vector = grid.lines().map(|line| {
         line.chars().collect()
     }).collect();
@@ -225,7 +222,7 @@ fn move_boxes_expanded(grid: &mut Grid, directions: &String) -> isize {
     let (mut starty, mut startx) = grid.robot();
 
     for d in directions.chars() {
-        let (ty, tx) = grid.move_expanded_node(d, starty, startx);
+        let (ty, tx) = grid.move_nodes(d, starty, startx);
         starty = ty;
         startx = tx;
     }
