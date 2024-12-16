@@ -132,6 +132,7 @@ fn multi_route(grid: &Grid) -> (usize, usize) {
 
     while let Some(StateWithPath { cost, dir, path }) = heap.pop() {
         let id = path[path.len() - 1];
+        let cache_key = id.pow((dir + 1) as u32);
 
         if id == end_id {
             if cost < cheap {
@@ -142,7 +143,7 @@ fn multi_route(grid: &Grid) -> (usize, usize) {
             }
         }
 
-        cache.insert((id, dir), cost);
+        cache.insert(cache_key, cost);
 
         for (d, added_cost) in &costs {
             let new_dir = (dir + d) % DIRECTIONS.len();
@@ -157,11 +158,10 @@ fn multi_route(grid: &Grid) -> (usize, usize) {
             new_path.push(next_id);
 
             let next_cost = cost + added_cost;
-            let hit = cache
-                .get(&(next_id, new_dir))
-                .unwrap_or(&usize::MAX);
+            let cache_key = next_id.pow((new_dir + 1) as u32);
+            let hit = cache.get(&cache_key).unwrap_or(&usize::MAX);
 
-            if next_cost < *hit {
+            if &next_cost < hit {
                 heap.push(
                     StateWithPath {
                         cost: next_cost,
