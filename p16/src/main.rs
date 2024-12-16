@@ -228,9 +228,11 @@ fn multi_route(grid: &Grid, max: usize) -> usize {
             new_path.push(next_id);
 
             let next_cost = cost + added_cost;
-            let hit = cache.get(&(next_id, new_dir));
+            let hit = cache
+                .get(&(next_id, new_dir))
+                .unwrap_or(&usize::MAX);
 
-            if hit.is_none_or(|&s| s > next_cost) {
+            if *hit > next_cost {
                 heap.push(
                     StateWithPath {
                         cost: next_cost,
