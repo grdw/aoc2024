@@ -9,7 +9,7 @@ const DIRECTIONS: [Point; 4] = [
     (0, -1)
 ];
 
-const COSTS: [Upoint; 3] = [
+const COSTS: [(usize, usize); 3] = [
     (1, 1001),
     (0, 1),
     (3, 1001)
@@ -17,8 +17,6 @@ const COSTS: [Upoint; 3] = [
 
 type RawGrid = Vec<Vec<char>>;
 type Point = (isize, isize);
-type PointDir = (isize, isize, usize);
-type Upoint = (usize, usize);
 
 struct Grid {
     vector: RawGrid,
@@ -52,7 +50,7 @@ impl Grid {
 
     fn lookup(&self, search: char) -> Point {
         for y in 0..self.ylen {
-            for x in 0..self.ylen {
+            for x in 0..self.xlen {
                 if self.get(&(y, x)) == search {
                     return (y, x)
                 }
@@ -60,24 +58,6 @@ impl Grid {
         }
 
         panic!("No point found")
-    }
-
-    #[allow(dead_code)]
-    fn debug(&self, routes: &Vec<PointDir>) {
-        for y in 0..self.ylen {
-            for x in 0..self.xlen {
-                let s = routes
-                    .iter()
-                    .find(|&&(py, px, _)| py == y && px == x);
-
-                if s.is_some() {
-                    print!("O");
-                } else {
-                    print!("{}", self.vector[y as usize][x as usize]);
-                }
-            }
-            println!("");
-        }
     }
 }
 
