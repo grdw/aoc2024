@@ -34,8 +34,16 @@ impl Grid {
         Grid {vector, ylen, xlen}
     }
 
-    fn id(&self, p: &Point) -> usize {
-        ((p.0 * self.ylen) + p.1) as usize
+    fn id(&self, p: &Point) -> isize {
+        (p.0 * self.ylen) + p.1
+    }
+
+    fn get_by_id(&self, id: &isize) -> char {
+        let l = self.ylen;
+        let y = id / l;
+        let x = id % l;
+
+        self.vector[y as usize][x as usize]
     }
 
     fn get(&self, p: &Point) -> char {
@@ -96,7 +104,7 @@ impl PartialOrd for State {
 struct StateWithPath {
     cost: usize,
     dir: usize,
-    path: Vec<Point>
+    path: Vec<isize>
 }
 
 impl Ord for StateWithPath {
@@ -133,12 +141,12 @@ fn cheapest_route(grid: &Grid) -> usize {
 
     let mut dist = vec![usize::MAX; (grid.ylen * grid.xlen) as usize];
     let mut heap = BinaryHeap::new();
-    dist[grid.id(&start)] = 0;
+    dist[grid.id(&start) as usize] = 0;
 
     heap.push(State { cost: 0, dir: 1, point: start });
 
     while let Some(State { cost, dir, point }) = heap.pop() {
-        let id = grid.id(&point);
+        let id = grid.id(&point) as usize;
 
         if point == end { return cost }
         if cost > dist[id] { continue }
@@ -152,7 +160,7 @@ fn cheapest_route(grid: &Grid) -> usize {
                 continue
             }
 
-            let next_id = grid.id(&(dy, dx));
+            let next_id = grid.id(&(dy, dx)) as usize;
             let next_cost = cost + added_cost;
 
             if next_cost < dist[next_id] {
@@ -187,39 +195,40 @@ fn test_cheapest_route() {
 fn multi_route(grid: &Grid, max: usize) -> usize {
     let start = grid.lookup('S');
     let end = grid.lookup('E');
+    let end_id = grid.id(&end);
     let costs = HashMap::from(COSTS);
 
-    let mut set: HashSet<Point> = HashSet::new();
+    let mut set: HashSet<isize> = HashSet::new();
     let mut cache = HashMap::new();
     let mut heap = BinaryHeap::new();
 
     heap.push(
-        StateWithPath { cost: 0, dir: 1, path: vec![start] }
+        StateWithPath { cost: 0, dir: 1, path: vec![grid.id(&start)] }
     );
 
     while let Some(StateWithPath { cost, dir, path }) = heap.pop() {
-        let point = path[path.len() - 1];
+        let id = path[path.len() - 1];
 
-        if point == end && cost == max {
+        if id == end_id && cost == max {
             set.extend(&path);
         }
 
-        cache.insert((point, dir), cost);
+        cache.insert((id, dir), cost);
 
         for (d, added_cost) in &costs {
             let new_dir = (dir + d) % DIRECTIONS.len();
-            let (ty, tx) = DIRECTIONS[new_dir];
-            let (dy, dx) = (point.0 + ty, point.1 + tx);
+            let t = DIRECTIONS[new_dir];
+            let next_id = id + grid.id(&t);
 
-            if grid.get(&(dy, dx)) == '#' {
+            if grid.get_by_id(&next_id) == '#' {
                 continue
             }
 
             let mut new_path = path.clone();
-            new_path.push((dy, dx));
+            new_path.push(next_id);
 
             let next_cost = cost + added_cost;
-            let hit = cache.get(&((dy, dx), new_dir));
+            let hit = cache.get(&(next_id, new_dir));
 
             if hit.is_none_or(|&s| s > next_cost) {
                 heap.push(
@@ -232,6 +241,7 @@ fn multi_route(grid: &Grid, max: usize) -> usize {
             }
         }
     }
+
     set.len()
 }
 
