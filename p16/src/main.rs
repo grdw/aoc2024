@@ -2,17 +2,17 @@ use std::cmp::Ordering;
 use std::fs;
 use std::collections::{BinaryHeap, HashMap, HashSet};
 
-const DIRECTIONS: [(usize, (isize, isize)); 4] = [
-    (90,  (0, 1)),
-    (180, (1, 0)),
-    (270, (0, -1)),
-    (0,   (-1, 0))
+const DIRECTIONS: [Point; 4] = [
+    (-1, 0),
+    (0, 1),
+    (1, 0),
+    (0, -1)
 ];
 
 const COSTS: [Upoint; 3] = [
-    (90, 1001),
+    (1, 1001),
     (0, 1),
-    (270, 1001)
+    (3, 1001)
 ];
 
 type RawGrid = Vec<Vec<char>>;
@@ -129,14 +129,13 @@ fn parse(input: &'static str) -> Grid {
 fn cheapest_route(grid: &Grid) -> usize {
     let start = grid.lookup('S');
     let end = grid.lookup('E');
-    let mut dist = vec![usize::MAX; (grid.ylen * grid.xlen) as usize];
-    let directions = HashMap::from(DIRECTIONS);
     let costs = HashMap::from(COSTS);
 
+    let mut dist = vec![usize::MAX; (grid.ylen * grid.xlen) as usize];
     let mut heap = BinaryHeap::new();
     dist[grid.id(&start)] = 0;
 
-    heap.push(State { cost: 0, dir: 90, point: start });
+    heap.push(State { cost: 0, dir: 1, point: start });
 
     while let Some(State { cost, dir, point }) = heap.pop() {
         let id = grid.id(&point);
@@ -145,25 +144,28 @@ fn cheapest_route(grid: &Grid) -> usize {
         if cost > dist[id] { continue }
 
         for (d, added_cost) in &costs {
-            let new_dir = (dir + d) % 360;
-            let (ty, tx) = directions[&new_dir];
+            let new_dir = (dir + d) % DIRECTIONS.len();
+            let (ty, tx) = DIRECTIONS[new_dir];
             let (dy, dx) = (point.0 + ty, point.1 + tx);
-            let next_id = grid.id(&(dy, dx));
 
             if grid.get(&(dy, dx)) == '#' {
                 continue
             }
 
-            let next = State {
-                cost: cost + added_cost,
-                dir: new_dir,
-                point: (dy, dx)
-            };
+            let next_id = grid.id(&(dy, dx));
+            let next_cost = cost + added_cost;
 
-            if next.cost < dist[next_id] {
-                dist[next_id] = next.cost;
+            if next_cost < dist[next_id] {
+                dist[next_id] = next_cost;
 
-                heap.push(next);
+                heap.push(
+                    State {
+                        cost: next_cost,
+                        dir: new_dir,
+                        point: (dy, dx)
+                    }
+                );
+
             }
         }
     }
@@ -185,7 +187,6 @@ fn test_cheapest_route() {
 fn multi_route(grid: &Grid, max: usize) -> usize {
     let start = grid.lookup('S');
     let end = grid.lookup('E');
-    let directions = HashMap::from(DIRECTIONS);
     let costs = HashMap::from(COSTS);
 
     let mut set: HashSet<Point> = HashSet::new();
@@ -193,7 +194,7 @@ fn multi_route(grid: &Grid, max: usize) -> usize {
     let mut heap = BinaryHeap::new();
 
     heap.push(
-        StateWithPath { cost: 0, dir: 90, path: vec![start] }
+        StateWithPath { cost: 0, dir: 1, path: vec![start] }
     );
 
     while let Some(StateWithPath { cost, dir, path }) = heap.pop() {
@@ -206,8 +207,8 @@ fn multi_route(grid: &Grid, max: usize) -> usize {
         cache.insert((point, dir), cost);
 
         for (d, added_cost) in &costs {
-            let new_dir = (dir + d) % 360;
-            let (ty, tx) = directions[&new_dir];
+            let new_dir = (dir + d) % DIRECTIONS.len();
+            let (ty, tx) = DIRECTIONS[new_dir];
             let (dy, dx) = (point.0 + ty, point.1 + tx);
 
             if grid.get(&(dy, dx)) == '#' {
