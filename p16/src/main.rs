@@ -82,25 +82,6 @@ impl Grid {
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
-struct State {
-    cost: usize,
-    dir: usize,
-    point: Point
-}
-
-impl Ord for State {
-    fn cmp(&self, other: &State) -> Ordering {
-        other.cost.cmp(&self.cost)
-    }
-}
-
-impl PartialOrd for State {
-    fn partial_cmp(&self, other: &State) -> Option<Ordering> {
-        Some(self.cmp(other))
-    }
-}
-
-#[derive(Clone, Debug, Eq, PartialEq)]
 struct StateWithPath {
     cost: usize,
     dir: usize,
@@ -121,9 +102,9 @@ impl PartialOrd for StateWithPath {
 
 fn main() {
     let grid = parse("input");
-    let n = cheapest_route(&grid);
-    println!("p1 {}", n);
-    println!("p2 {}", multi_route(&grid, n));
+    let (cheapest, paths) = multi_route(&grid);
+    println!("p1 {}", cheapest);
+    println!("p2 {}", paths);
 }
 
 fn parse(input: &'static str) -> Grid {
@@ -134,70 +115,13 @@ fn parse(input: &'static str) -> Grid {
     Grid::new(vector)
 }
 
-fn cheapest_route(grid: &Grid) -> usize {
-    let start = grid.lookup('S');
-    let end = grid.lookup('E');
-    let costs = HashMap::from(COSTS);
-
-    let mut dist = vec![usize::MAX; (grid.ylen * grid.xlen) as usize];
-    let mut heap = BinaryHeap::new();
-    dist[grid.id(&start) as usize] = 0;
-
-    heap.push(State { cost: 0, dir: 1, point: start });
-
-    while let Some(State { cost, dir, point }) = heap.pop() {
-        let id = grid.id(&point) as usize;
-
-        if point == end { return cost }
-        if cost > dist[id] { continue }
-
-        for (d, added_cost) in &costs {
-            let new_dir = (dir + d) % DIRECTIONS.len();
-            let (ty, tx) = DIRECTIONS[new_dir];
-            let (dy, dx) = (point.0 + ty, point.1 + tx);
-
-            if grid.get(&(dy, dx)) == '#' {
-                continue
-            }
-
-            let next_id = grid.id(&(dy, dx)) as usize;
-            let next_cost = cost + added_cost;
-
-            if next_cost < dist[next_id] {
-                dist[next_id] = next_cost;
-
-                heap.push(
-                    State {
-                        cost: next_cost,
-                        dir: new_dir,
-                        point: (dy, dx)
-                    }
-                );
-
-            }
-        }
-    }
-
-    0
-}
-
-#[test]
-fn test_cheapest_route() {
-    let maze = parse("1");
-    let cost = cheapest_route(&maze);
-    assert_eq!(cost, 7036);
-
-    let maze = parse("2");
-    let cost = cheapest_route(&maze);
-    assert_eq!(cost, 11048);
-}
-
-fn multi_route(grid: &Grid, max: usize) -> usize {
+fn multi_route(grid: &Grid) -> (usize, usize) {
     let start = grid.lookup('S');
     let end = grid.lookup('E');
     let end_id = grid.id(&end);
     let costs = HashMap::from(COSTS);
 
+    let mut cheap = usize::MAX;
     let mut set: HashSet<isize> = HashSet::new();
     let mut cache = HashMap::new();
     let mut heap = BinaryHeap::new();
@@ -209,8 +133,13 @@ fn multi_route(grid: &Grid, max: usize) -> usize {
     while let Some(StateWithPath { cost, dir, path }) = heap.pop() {
         let id = path[path.len() - 1];
 
-        if id == end_id && cost == max {
-            set.extend(&path);
+        if id == end_id {
+            if cost < cheap {
+                cheap = cost;
+                set.extend(&path);
+            } else if cost == cheap {
+                set.extend(&path);
+            }
         }
 
         cache.insert((id, dir), cost);
@@ -232,7 +161,7 @@ fn multi_route(grid: &Grid, max: usize) -> usize {
                 .get(&(next_id, new_dir))
                 .unwrap_or(&usize::MAX);
 
-            if *hit > next_cost {
+            if next_cost < *hit {
                 heap.push(
                     StateWithPath {
                         cost: next_cost,
@@ -244,16 +173,18 @@ fn multi_route(grid: &Grid, max: usize) -> usize {
         }
     }
 
-    set.len()
+    (cheap, set.len())
 }
 
 #[test]
 fn test_multiple_routes() {
     let maze = parse("1");
-    let r = multi_route(&maze, 7036);
+    let (cost, r) = multi_route(&maze);
+    assert_eq!(cost, 7036);
     assert_eq!(r, 45);
 
     let maze = parse("2");
-    let r = multi_route(&maze, 11048);
+    let (cost, r) = multi_route(&maze);
+    assert_eq!(cost, 11048);
     assert_eq!(r, 64);
 }
