@@ -40,7 +40,7 @@ cargo build --release; time ./target/release pX
 | 14  | 0.887    | 1       | 🧡🧡🧡🧡🧡 |
 | 15  | 0.003    | 2       | 🧡🧡🧡🧡🖤 |
 | 16  | 4.435    | 1       | 🧡🧡🧡🧡🖤 |
-| 17  |          |         | 🖤🖤🖤🖤🖤 |
+| 17  | 0.001    | 2       | 🧡🖤🖤🖤🖤 |
 | 18  |          |         | 🖤🖤🖤🖤🖤 |
 | 19  |          |         | 🖤🖤🖤🖤🖤 |
 | 20  |          |         | 🖤🖤🖤🖤🖤 |
@@ -49,3 +49,5 @@ cargo build --release; time ./target/release pX
 | 23  |          |         | 🖤🖤🖤🖤🖤 |
 | 24  |          |         | 🖤🖤🖤🖤🖤 |
 | 25  |          |         | 🖤🖤🖤🖤🖤 |
+
+A low rating usually means there was only one solution which if you didn't know the math behind it or "the singular trick" it would basically be pointless to even attempt it. I always love the one's where there are multiple approaches to the same goal.
