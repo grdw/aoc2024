@@ -31,15 +31,14 @@ fn parse(input: &'static str) -> (Vec<u32>, Vec<u8>) {
 fn output(registers: &mut Vec<u32>, programs: &Vec<u8>) -> String {
     let mut instruction_pointer = 0;
     let mut output = vec![];
+
     while instruction_pointer < programs.len() {
         let opcode = programs[instruction_pointer];
         let operand = programs[instruction_pointer + 1];
 
         match opcode {
             0 => { // adv
-                let numerator = registers[0];
-                let denominator = 2_u32.pow(combo_operand(operand, &registers));
-                registers[0] = numerator / denominator;
+                registers[0] = divide(operand, &registers);
             },
             1 => { // bxl
                 registers[1] = registers[1] ^ (operand as u32);
@@ -62,14 +61,10 @@ fn output(registers: &mut Vec<u32>, programs: &Vec<u8>) -> String {
                 output.push(c);
             },
             6 => { // bdv
-                let numerator = registers[0];
-                let denominator = 2_u32.pow(combo_operand(operand, &registers));
-                registers[1] = numerator / denominator;
+                registers[1] = divide(operand, &registers);
             },
             7 => { // cdv
-                let numerator = registers[0];
-                let denominator = 2_u32.pow(combo_operand(operand, &registers));
-                registers[2] = numerator / denominator;
+                registers[2] = divide(operand, &registers);
             },
             _ => panic!("Invalid opcode {}", opcode)
         }
@@ -80,14 +75,22 @@ fn output(registers: &mut Vec<u32>, programs: &Vec<u8>) -> String {
     output.iter().map(|n| n.to_string()).collect::<Vec<String>>().join(",")
 }
 
-fn combo_operand(n: u8, registers: &Vec<u32>) -> u32 {
-    match n {
-        0..=3 => n as u32,
+fn combo_operand(operand: u8, registers: &Vec<u32>) -> u32 {
+    match operand {
+        0..=3 => operand as u32,
         4 => registers[0],
         5 => registers[1],
         6 => registers[2],
         _ => panic!("Invalid combo operand")
     }
+}
+
+fn divide(operand: u8, registers: &Vec<u32>) -> u32 {
+    let numerator = registers[0];
+    let combo = combo_operand(operand, &registers);
+    let denominator = 2_u32.pow(combo);
+
+    numerator / denominator
 }
 
 #[test]
