@@ -2,6 +2,7 @@ use std::cmp::Ordering;
 use std::fs;
 use std::collections::{BinaryHeap, HashMap};
 
+const SIZE: i16 = 70;
 const DIRECTIONS: [Point; 4] = [
     (-1, 0),
     (0, 1),
@@ -76,8 +77,8 @@ impl PartialOrd for Node {
 fn main() {
     let points = parse("input");
 
-    println!("p1 {}", route(70, &points[0..1024]).unwrap());
-    println!("p2 {}", last_point(70, &points));
+    println!("p1 {}", route(SIZE, &points[0..1024]).unwrap());
+    println!("p2 {}", last_point(SIZE, &points));
 }
 
 fn parse(input: &'static str) -> Vec<Point> {
