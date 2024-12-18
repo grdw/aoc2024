@@ -122,7 +122,7 @@ fn route(size: i16, points: &[Point]) -> usize {
         position: start,
         cost: 0,
         estimate: heuristic(&start, &end)
-	});
+   });
 
     let mut came_from: HashMap<usize, usize> = HashMap::new();
     let mut g_score = vec![usize::MAX; size_u * size_u];
