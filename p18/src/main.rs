@@ -171,8 +171,9 @@ fn test_multiple_routes() {
 fn last_point(size: i16, points: &[Point]) -> String {
     for i in 0..points.len() {
         if route(size, &points[0..i]).is_none() {
-            let p = points[i - 1];
-            return format!("{},{}", p.1, p.0);
+            let (y, x) = points[i - 1];
+
+            return format!("{},{}", x, y);
         }
     }
 
