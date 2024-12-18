@@ -77,7 +77,7 @@ fn main() {
     let points = parse("input");
 
     println!("p1 {}", route(70, &points[0..1024]));
-    //println!("p2 {}", paths);
+    println!("p2 {}", last_point(70, &points));
 }
 
 fn parse(input: &'static str) -> Vec<Point> {
@@ -88,12 +88,30 @@ fn parse(input: &'static str) -> Vec<Point> {
     }).collect()
 }
 
+// This is the Manhattan distance
 fn heuristic(s: &Point, e: &Point) -> usize {
     let dx = if s.0 > e.0 { s.0 - e.0 } else { e.0 - s.0 };
     let dy = if s.1 > e.1 { s.1 - e.1 } else { e.1 - s.1 };
     (dx + dy) as usize
 }
 
+fn reconstruct_path(map: &HashMap<usize, usize>, current: usize) -> usize {
+    let mut count = 0;
+    let mut search = current;
+    loop {
+        let prev_id = map.get(&search);
+        match prev_id {
+            Some(x) => {
+                search = *x;
+                count += 1;
+            },
+            None => break
+        }
+    }
+    count
+}
+
+// Basic A* implementation
 fn route(size: i16, points: &[Point]) -> usize {
     let start: Point = (0, 0);
     let end: Point = (size, size);
@@ -147,24 +165,25 @@ fn route(size: i16, points: &[Point]) -> usize {
     0
 }
 
-fn reconstruct_path(map: &HashMap<usize, usize>, current: usize) -> usize {
-    let mut count = 0;
-    let mut search = current;
-    loop {
-        let prev_id = map.get(&search);
-        match prev_id {
-            Some(x) => {
-                search = *x;
-                count += 1;
-            },
-            None => break
-        }
-    }
-    count
-}
-
 #[test]
 fn test_multiple_routes() {
     let points = parse("1");
     assert_eq!(route(6, &points[0..12]), 22);
+}
+
+fn last_point(size: i16, points: &[Point]) -> String {
+    for i in 0..points.len() {
+        if route(size, &points[0..i]) == 0 {
+            let p = points[i - 1];
+            return format!("{},{}", p.1, p.0);
+        }
+    }
+
+    String::new()
+}
+
+#[test]
+fn test_last_point() {
+    let points = parse("1");
+    assert_eq!(last_point(6, &points), String::from("6,1"));
 }
