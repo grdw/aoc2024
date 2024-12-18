@@ -106,7 +106,6 @@ fn route(size: i16, points: &[Point]) -> usize {
         estimate: heuristic(&start, &end)
 	});
 
-    // A* implementation ... but what about that f_score?
     let mut came_from: HashMap<usize, usize> = HashMap::new();
     let mut g_score = HashMap::new();
     for y in 0..grid.size {
