@@ -76,7 +76,7 @@ impl PartialOrd for Node {
 fn main() {
     let points = parse("input");
 
-    println!("p1 {}", route(70, &points[0..1024]));
+    println!("p1 {}", route(70, &points[0..1024]).unwrap());
     println!("p2 {}", last_point(70, &points));
 }
 
@@ -112,26 +112,28 @@ fn reconstruct_path(map: &HashMap<usize, usize>, current: usize) -> usize {
 }
 
 // Basic A* implementation
-fn route(size: i16, points: &[Point]) -> usize {
+fn route(size: i16, points: &[Point]) -> Option<usize> {
     let start: Point = (0, 0);
     let end: Point = (size, size);
     let size_u = (size + 1) as usize;
     let grid = Grid::new(size_u, points);
+
     let mut heap = BinaryHeap::new();
+    let mut came_from: HashMap<usize, usize> = HashMap::new();
+    let mut g_score = vec![usize::MAX; size_u * size_u];
+
     heap.push(Node {
         position: start,
         cost: 0,
         estimate: heuristic(&start, &end)
-   });
+    });
 
-    let mut came_from: HashMap<usize, usize> = HashMap::new();
-    let mut g_score = vec![usize::MAX; size_u * size_u];
     g_score[0] = 0;
 
     while let Some(node) = heap.pop() {
         let id = grid.id(&node.position);
         if node.position == end {
-            return reconstruct_path(&came_from, id);
+            return Some(reconstruct_path(&came_from, id));
         }
 
         for (ty, tx) in &DIRECTIONS {
@@ -156,18 +158,18 @@ fn route(size: i16, points: &[Point]) -> usize {
         }
     }
 
-    0
+    None
 }
 
 #[test]
 fn test_multiple_routes() {
     let points = parse("1");
-    assert_eq!(route(6, &points[0..12]), 22);
+    assert_eq!(route(6, &points[0..12]), Some(22));
 }
 
 fn last_point(size: i16, points: &[Point]) -> String {
     for i in 0..points.len() {
-        if route(size, &points[0..i]) == 0 {
+        if route(size, &points[0..i]).is_none() {
             let p = points[i - 1];
             return format!("{},{}", p.1, p.0);
         }
