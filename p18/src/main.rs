@@ -90,8 +90,8 @@ fn parse(input: &'static str) -> Vec<Point> {
 
 // This is the Manhattan distance
 fn heuristic(s: &Point, e: &Point) -> usize {
-    let dx = if s.0 > e.0 { s.0 - e.0 } else { e.0 - s.0 };
-    let dy = if s.1 > e.1 { s.1 - e.1 } else { e.1 - s.1 };
+    let dx = e.0 - s.0;
+    let dy = e.1 - s.1;
     (dx + dy) as usize
 }
 
