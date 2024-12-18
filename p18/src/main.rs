@@ -128,14 +128,14 @@ fn route(size: i16, points: &[Point]) -> usize {
     let mut g_score = vec![usize::MAX; size_u * size_u];
     g_score[0] = 0;
 
-    while let Some(Node { position, cost: _, estimate: _ }) = heap.pop() {
-        let id = grid.id(&position);
-        if position == end {
+    while let Some(node) = heap.pop() {
+        let id = grid.id(&node.position);
+        if node.position == end {
             return reconstruct_path(&came_from, id);
         }
 
         for (ty, tx) in &DIRECTIONS {
-            let np = (position.0 + ty, position.1 + tx);
+            let np = (node.position.0 + ty, node.position.1 + tx);
 
             if grid.out_of_bounds(&np) || grid.is_corrupted(&np)  {
                 continue
