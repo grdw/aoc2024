@@ -96,9 +96,9 @@ fn heuristic(s: &Point, e: &Point) -> usize {
     (dx + dy) as usize
 }
 
-fn reconstruct_path(map: &HashMap<usize, usize>, current: usize) -> usize {
+fn reconstruct_path(map: &HashMap<usize, usize>, id: usize) -> usize {
     let mut count = 0;
-    let mut search = current;
+    let mut search = id;
     loop {
         let prev_id = map.get(&search);
         match prev_id {
