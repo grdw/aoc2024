@@ -125,14 +125,8 @@ fn route(size: i16, points: &[Point]) -> usize {
 	});
 
     let mut came_from: HashMap<usize, usize> = HashMap::new();
-    let mut g_score = HashMap::new();
-    for y in 0..grid.size {
-        for x in 0..grid.size {
-            let p = (y as i16, x as i16);
-            g_score.insert(grid.id(&p), usize::MAX);
-        }
-    }
-    g_score.insert(grid.id(&start), 0);
+    let mut g_score = vec![usize::MAX; size_u * size_u];
+    g_score[0] = 0;
 
     while let Some(Node { position, cost: _, estimate: _ }) = heap.pop() {
         let id = grid.id(&position);
@@ -148,11 +142,11 @@ fn route(size: i16, points: &[Point]) -> usize {
             }
 
             let next_id = grid.id(&np);
-            let new_score = g_score[&id] + 1;
+            let new_score = g_score[id] + 1;
 
-            if new_score < g_score[&next_id] {
+            if new_score < g_score[next_id] {
                 came_from.insert(next_id, id);
-                g_score.insert(next_id, new_score);
+                g_score[next_id] = new_score;
                 heap.push(Node {
                     position: np,
                     cost: new_score,
