@@ -1,6 +1,5 @@
-use std::cmp::Ordering;
 use std::fs;
-use std::collections::{BinaryHeap, HashSet};
+use std::collections::{BinaryHeap, HashMap, HashSet};
 
 fn main() {
     let (patterns, designs) = parse("input");
@@ -69,46 +68,39 @@ fn can_design(design: &String, patterns: &Vec<String>) -> bool {
     false
 }
 
-fn design_count(design: &String, patterns: &Vec<String>) -> usize {
-    println!("{:?}", design);
-    let mut possibilities = 0;
+fn total_design_count(patterns: &Vec<String>, designs: &Vec<String>) -> usize {
+    let mut p = 0;
+    let mut memo: HashMap<String, usize> = HashMap::new();
+    memo.insert(String::from(""), 1);
 
-    let mut queue = BinaryHeap::new();
-    //let mut seen = HashSet::new();
-    queue.push(0);
-
-    while let Some(s) = queue.pop() {
-        //let slice = &design[0..s];
-
-        //if seen.contains(slice) {
-        //    continue
-        //}
-
-        if s == design.len() {
-            possibilities += 1;
-            println!("{:?}", possibilities);
-        }
-
-        for p in patterns {
-            let next = s + p.len();
-
-            if next > design.len() {
-                continue
-            }
-
-            if &design[s..next] == p.as_str() {
-                queue.push(next);
-            }
-        }
-
-        //seen.insert(slice);
+    for design in designs {
+        p += design_count(design, patterns, &mut memo);
     }
 
-    possibilities
+    p
 }
 
-fn total_design_count(patterns: &Vec<String>, designs: &Vec<String>) -> usize {
-    designs.iter().map(|d| design_count(&d, patterns)).sum()
+fn design_count(
+    design: &String,
+    patterns: &Vec<String>,
+    memo: &mut HashMap<String, usize>) -> usize {
+
+    if memo.contains_key(design) {
+        return memo[design]
+    }
+
+    let mut p = 0;
+    let max = patterns.iter().map(|n| n.len()).max().unwrap();
+
+    for i in 0..design.len().min(max) {
+        let (prefix, suffix) = design.split_at(i + 1);
+        if patterns.contains(&prefix.to_string()) {
+            p += design_count(&suffix.to_string(), patterns, memo);
+        }
+    }
+
+    memo.insert(design.to_string(), p);
+    p
 }
 
 #[test]
