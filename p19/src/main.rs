@@ -33,26 +33,29 @@ fn can_make_design(design: &String, patterns: &Vec<String>) -> bool {
     queue.push(0);
 
     while let Some(s) = queue.pop() {
-        if seen.contains(&design[0..s]) {
+        let slice = &design[0..s];
+
+        if seen.contains(slice) {
             continue
         }
+
         if s == design.len() {
             return true
         }
 
         for p in patterns {
-            let e = s + p.len();
+            let next = s + p.len();
 
-            if e > design.len() {
+            if next > design.len() {
                 continue
             }
 
-            if &design[s..e] == p.as_str() {
-                queue.push(e);
+            if &design[s..next] == p.as_str() {
+                queue.push(next);
             }
         }
 
-        seen.insert(&design[0..s]);
+        seen.insert(slice);
     }
     false
 }
