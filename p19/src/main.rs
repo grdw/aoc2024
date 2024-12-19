@@ -69,15 +69,13 @@ fn can_design(design: &String, patterns: &Vec<String>) -> bool {
 }
 
 fn total_design_count(patterns: &Vec<String>, designs: &Vec<String>) -> usize {
-    let mut p = 0;
     let mut memo: HashMap<String, usize> = HashMap::new();
     memo.insert(String::from(""), 1);
 
-    for design in designs {
-        p += design_count(design, patterns, &mut memo);
-    }
-
-    p
+    designs
+        .iter()
+        .map(|design| design_count(design, patterns, &mut memo))
+        .sum()
 }
 
 fn design_count(
