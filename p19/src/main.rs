@@ -1,5 +1,5 @@
 use std::fs;
-use std::collections::{BinaryHeap, HashMap, HashSet};
+use std::collections::{HashMap, HashSet};
 
 fn main() {
     let (patterns, designs) = parse("input");
@@ -35,12 +35,12 @@ fn test_possible_designs() {
 }
 
 fn can_design(design: &String, patterns: &Vec<String>) -> bool {
-    let mut queue = BinaryHeap::new();
+    let mut queue = vec![];
     let mut seen = HashSet::new();
     queue.push(&design[..]);
 
     while let Some(s) = queue.pop() {
-        if s.len() == 0 {
+        if s.is_empty() {
             return true
         }
 
