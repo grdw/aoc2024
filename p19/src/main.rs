@@ -87,18 +87,18 @@ fn design_count(
         return memo[design]
     }
 
-    let mut p = 0;
+    let mut count = 0;
     let max = patterns.iter().map(|n| n.len()).max().unwrap();
 
     for i in 0..design.len().min(max) {
         let (prefix, suffix) = design.split_at(i + 1);
         if patterns.contains(&prefix.to_string()) {
-            p += design_count(&suffix.to_string(), patterns, memo);
+            count += design_count(&suffix.to_string(), patterns, memo);
         }
     }
 
-    memo.insert(design.to_string(), p);
-    p
+    memo.insert(design.to_string(), count);
+    count
 }
 
 #[test]
