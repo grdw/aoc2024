@@ -62,17 +62,19 @@ fn can_design(design: &String, patterns: &Vec<String>) -> bool {
 
 fn total_design_count(patterns: &Vec<String>, designs: &Vec<String>) -> usize {
     let mut memo: HashMap<&str, usize> = HashMap::new();
+    let max = patterns.iter().map(|n| n.len()).max().unwrap();
     memo.insert("", 1);
 
     designs
         .iter()
-        .map(|design| design_count(design.as_str(), patterns, &mut memo))
+        .map(|design| design_count(design.as_str(), patterns, max, &mut memo))
         .sum()
 }
 
 fn design_count<'a>(
     design: &'a str,
     patterns: &Vec<String>,
+    max: usize,
     memo: &mut HashMap<&'a str, usize>) -> usize {
 
     if memo.contains_key(design) {
@@ -80,12 +82,11 @@ fn design_count<'a>(
     }
 
     let mut count = 0;
-    let max = patterns.iter().map(|n| n.len()).max().unwrap();
 
     for i in 0..design.len().min(max) {
         let (prefix, suffix) = design.split_at(i + 1);
         if patterns.contains(&prefix.to_string()) {
-            count += design_count(&suffix, patterns, memo);
+            count += design_count(&suffix, patterns, max, memo);
         }
     }
 
