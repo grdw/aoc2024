@@ -37,32 +37,24 @@ fn test_possible_designs() {
 fn can_design(design: &String, patterns: &Vec<String>) -> bool {
     let mut queue = BinaryHeap::new();
     let mut seen = HashSet::new();
-    queue.push(0);
+    queue.push(&design[0..]);
 
     while let Some(s) = queue.pop() {
-        let slice = &design[0..s];
-
-        if seen.contains(slice) {
-            continue
-        }
-
-        if s == design.len() {
+        if s.len() == 0 {
             return true
         }
 
+        if seen.contains(&s) {
+            continue
+        }
+
         for p in patterns {
-            let next = s + p.len();
-
-            if next > design.len() {
-                continue
-            }
-
-            if &design[s..next] == p.as_str() {
-                queue.push(next);
+            if let Some(n) = s.strip_prefix(p) {
+                queue.push(n)
             }
         }
 
-        seen.insert(slice);
+        seen.insert(s);
     }
 
     false
@@ -104,5 +96,6 @@ fn design_count(
 #[test]
 fn test_design_count() {
     let (patterns, designs) = parse("1");
+
     assert_eq!(total_design_count(&patterns, &designs), 16);
 }
