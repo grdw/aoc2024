@@ -11,7 +11,7 @@ fn parse(input: &'static str) -> (Vec<String>, Vec<String>) {
     let input = fs::read_to_string(input).unwrap();
     let (patterns_r, designs_r) = input.split_once("\n\n").unwrap();
 
-    let patterns: Vec<String> = patterns_r
+    let patterns = patterns_r
         .split(", ")
         .map(|p| p.to_string())
         .collect();
