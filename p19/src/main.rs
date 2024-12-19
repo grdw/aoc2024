@@ -37,7 +37,7 @@ fn test_possible_designs() {
 fn can_design(design: &String, patterns: &Vec<String>) -> bool {
     let mut queue = BinaryHeap::new();
     let mut seen = HashSet::new();
-    queue.push(&design[0..]);
+    queue.push(&design[..]);
 
     while let Some(s) = queue.pop() {
         if s.len() == 0 {
