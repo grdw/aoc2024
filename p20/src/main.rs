@@ -98,9 +98,9 @@ impl PartialOrd for Node {
 }
 
 fn main() {
-    let mut grid = parse("input");
+    let grid = parse("input");
 
-    println!("p1 {}", cheat_count(&mut grid, 100));
+    println!("p1 {}", cheat_count(&grid, 100));
 }
 
 fn parse(input: &'static str) -> Grid {
@@ -136,7 +136,7 @@ fn reconstruct_path(map: &HashMap<usize, usize>, id: usize) -> Vec<usize> {
 }
 
 // Basic A* implementation
-fn route(grid: &mut Grid, cheat: &Vec<usize>) -> Option<Vec<usize>> {
+fn route(grid: &Grid, cheat: &Vec<usize>) -> Option<Vec<usize>> {
     let start = grid.lookup('S');
     let end = grid.lookup('E');
     let mut heap = BinaryHeap::new();
@@ -186,7 +186,7 @@ fn route(grid: &mut Grid, cheat: &Vec<usize>) -> Option<Vec<usize>> {
     None
 }
 
-fn cheat_count(grid: &mut Grid, seconds: usize) -> usize {
+fn cheat_count(grid: &Grid, seconds: usize) -> usize {
     let regular = route(grid, &vec![]).unwrap();
     let t_no_cheating = regular.len();
 
@@ -239,6 +239,6 @@ fn cheat_count(grid: &mut Grid, seconds: usize) -> usize {
 
 #[test]
 fn test_cheat_count() {
-    let mut grid = parse("1");
-    assert_eq!(cheat_count(&mut grid, 12), 8);
+    let grid = parse("1");
+    assert_eq!(cheat_count(&grid, 12), 8);
 }
