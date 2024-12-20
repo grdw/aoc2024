@@ -1,5 +1,7 @@
 use std::cmp::Ordering;
+use std::ops::Range;
 use std::fs;
+use std::cmp;
 use std::collections::{BinaryHeap, HashMap, HashSet};
 
 const DIRECTIONS: [Point; 4] = [
@@ -101,6 +103,7 @@ fn main() {
     let grid = parse("input");
 
     println!("p1 {}", cheat_count(&grid, 100));
+    println!("p2 {}", cheat_count_revised(&grid, 100));
 }
 
 fn parse(input: &'static str) -> Grid {
@@ -241,4 +244,143 @@ fn cheat_count(grid: &Grid, seconds: usize) -> usize {
 fn test_cheat_count() {
     let grid = parse("1");
     assert_eq!(cheat_count(&grid, 12), 8);
+}
+
+// Basic A* implementation
+fn route_range(grid: &Grid, cheat: &(usize, usize)) -> Option<Vec<usize>> {
+    let start = grid.lookup('S');
+    let end = grid.lookup('E');
+    let mut heap = BinaryHeap::new();
+    let mut came_from: HashMap<usize, usize> = HashMap::new();
+    let mut g_score = vec![usize::MAX; grid.size * grid.size];
+
+    heap.push(Node {
+        position: start,
+        cost: 0,
+        estimate: heuristic(&start, &end)
+    });
+
+    g_score[grid.id(&start)] = 0;
+
+    while let Some(node) = heap.pop() {
+        let id = grid.id(&node.position);
+        if node.position == end {
+            return Some(reconstruct_path(&came_from, id));
+        }
+
+        for (ty, tx) in &DIRECTIONS {
+            let np = (node.position.0 + ty, node.position.1 + tx);
+
+            if grid.out_of_bounds(&np) {
+                continue
+            }
+
+            let new_score = g_score[id] + 1;
+            let next_id = grid.id(&np);
+
+            if grid.is_wall(&np) && !falls_within(&next_id, cheat, grid.size) {
+                continue
+            }
+
+            if new_score < g_score[next_id] {
+                came_from.insert(next_id, id);
+                g_score[next_id] = new_score;
+                heap.push(Node {
+                    position: np,
+                    cost: new_score,
+                    estimate: new_score + heuristic(&np, &end)
+                });
+            }
+        }
+    }
+
+    None
+}
+
+fn falls_within(id: &usize, cheat: &(usize, usize), s: usize) -> bool {
+    let ay = cheat.0 / s;
+    let ax = cheat.0 % s;
+    let by = cheat.1 / s;
+    let bx = cheat.1 % s;
+    let cy = id / s;
+    let cx = id % s;
+
+    cy >= ay && cx >= ax && cy <= by && cx <= bx
+}
+
+#[test]
+fn test_falls_within() {
+    assert_eq!(falls_within(&12, &(6, 13), 5), true);
+    assert_eq!(falls_within(&2, &(6, 13), 5), false);
+    assert_eq!(falls_within(&13, &(6, 13), 5), true);
+}
+
+fn cheat_count_revised(grid: &Grid, seconds: usize) -> usize {
+    let regular = route(grid, &vec![]).unwrap();
+    let t_no_cheating = regular.len();
+
+    let mut count = 0;
+    let mut cheats = HashSet::new();
+    let mut starts = HashSet::new();
+
+    for r in regular {
+        let tries = vec![
+            r - 1,
+            r + 1,
+            r - grid.size,
+            r + grid.size
+        ];
+
+        for t in tries {
+            if grid.id_is(t, '#') {
+                starts.insert(t);
+            }
+        }
+    }
+
+    let grid_size = grid.size as isize;
+    for s in starts {
+        let t = s as isize;
+        for i in 1..=20 {
+            let down = i * grid_size;
+            let up = i * -grid_size;
+            let left = i;
+            let right = -i;
+
+            let ends = vec![
+                t + down,
+                t + up,
+                t + left,
+                t + right
+            ];
+
+            for t in ends {
+                let q = t as usize;
+
+                if grid.id_is(q, '.') {
+                    //let p = (cmp::min(s, q), cmp::max(s, q));
+                    cheats.insert((s, q));
+                }
+            }
+        }
+    }
+
+    println!("{:?}", cheats.len());
+    for cheat in cheats.iter() {
+        let cheated_route = route_range(grid, cheat).unwrap();
+        let saved = t_no_cheating - cheated_route.len();
+
+        if saved >= seconds {
+            println!("Saved {} seconds", saved);
+            count += 1;
+        }
+    }
+
+    count
+}
+
+#[test]
+fn test_cheat_count_no_revised() {
+    let grid = parse("1");
+    assert_eq!(cheat_count_revised(&grid, 50), 285);
 }
