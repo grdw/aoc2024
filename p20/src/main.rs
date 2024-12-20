@@ -96,6 +96,7 @@ struct Node {
     position: Point,
     cost: usize, // g-score: cost from start to this node
     estimate: usize, // f-score: g-score + heuristic estimate to goal
+    cheat_ps: usize
 }
 
 impl Ord for Node {
@@ -162,6 +163,7 @@ fn route(grid: &Grid, cheat: &Vec<usize>) -> Option<Vec<isize>> {
         position: start,
         cost: 0,
         estimate: heuristic(&start, &end),
+        cheat_ps: 0
     });
 
     g_score[grid.id(&start)] = 0;
@@ -193,6 +195,7 @@ fn route(grid: &Grid, cheat: &Vec<usize>) -> Option<Vec<isize>> {
                     position: np,
                     cost: new_score,
                     estimate: new_score + heuristic(&np, &end),
+                    cheat_ps: 0
                 });
             }
         }
@@ -273,21 +276,19 @@ fn reconstruct_path_with_hacks(
 }
 
 // Basic A* implementation
-fn route_range(
-    grid: &Grid,
-    start: &Point,
-    end: &Point,
-    skip_walls: bool) -> Option<Vec<(usize, bool)>> {
-
+fn route_range(grid: &Grid, skip: usize) -> Option<Vec<(usize, bool)>> {
+    let start = grid.lookup('S');
+    let end = grid.lookup('E');
     let mut heap = BinaryHeap::new();
     let mut came_from: HashMap<usize, usize> = HashMap::new();
     let mut hacked = HashSet::new();
     let mut g_score = vec![usize::MAX; grid.size * grid.size];
 
     heap.push(Node {
-        position: *start,
+        position: start,
         cost: 0,
         estimate: heuristic(&start, &end),
+        cheat_ps: 0
     });
 
     g_score[grid.id(&start)] = 0;
@@ -295,7 +296,7 @@ fn route_range(
     while let Some(node) = heap.pop() {
         let id = grid.id(&node.position);
 
-        if &node.position == end {
+        if node.position == end {
             return Some(
                 reconstruct_path_with_hacks(
                     &came_from,
@@ -314,9 +315,16 @@ fn route_range(
 
             let new_score = g_score[id] + 1;
             let next_id = grid.id(&np);
+            let mut ps = node.cheat_ps;
 
-            if grid.is_wall(&np) && !skip_walls {
-                continue
+            if grid.is_wall(&np)  {
+                if next_id == skip || ps > 0 {
+                    ps += 1;
+                }
+
+                if ps == 0 || ps == 20 {
+                    continue
+                }
             }
 
             if new_score < g_score[next_id] {
@@ -327,23 +335,13 @@ fn route_range(
                     position: np,
                     cost: new_score,
                     estimate: new_score + heuristic(&np, &end),
+                    cheat_ps: ps
                 });
             }
         }
     }
 
     None
-}
-
-fn falls_within(id: &usize, cheat: &(usize, usize), s: usize) -> bool {
-    let ay = cheat.0 / s;
-    let ax = cheat.0 % s;
-    let by = cheat.1 / s;
-    let bx = cheat.1 % s;
-    let cy = id / s;
-    let cx = id % s;
-
-    cy >= ay && cx >= ax && cy <= by && cx <= bx
 }
 
 #[test]
@@ -362,41 +360,32 @@ fn cheat_count_revised(grid: &Grid, seconds: usize) -> usize {
     let t_no_cheating = regular.len();
 
     let mut count = 0;
-    let mut cheats = vec![];
+    let mut starts = HashSet::new();
 
-    for i in 0..regular.len() {
-        if regular[i] == grid.id(&start) as isize {
-            continue
-        }
+    let grid_size = grid.size as isize;
+    let tries = vec![-1, 1, -grid_size, grid_size];
 
-        for j in (i + 1)..regular.len() {
-            let a = &regular[i];
-            let b = &regular[j];
+    for r in regular {
+        for t in &tries {
+            let q = (r + *t) as usize;
 
-            cheats.push((a, b));
+            if grid.id_is(q, '#') {
+                starts.insert(q);
+            }
         }
     }
 
-    for (int_start, int_end) in &cheats {
-        let s = grid.to_point(**int_start as usize);
-        let e = grid.to_point(**int_end as usize);
-        let n = route_range(grid, &start, &s, false).unwrap();
-        let m = route_range(grid, &s, &e, true).unwrap();
-        let o = route_range(grid, &e, &goal, false).unwrap();
+    for s in &starts {
+        let n = route_range(grid, *s).unwrap();
 
-        println!("================");
-        if n.len() < 10 {
-            grid.debug(&n);
-            grid.debug(&m);
-            grid.debug(&o);
-            break;
+        if n.len() < t_no_cheating {
+            let diff = t_no_cheating - n.len();
+            if diff > seconds {
+                println!("{:?}", diff);
+            }
         }
-        //let total = n.len() + m.len() + o.len();
-        //if total < t_no_cheating {
-            //println!("{:?}", total - t_no_cheating);
-        //}
     }
-    println!("{:?}", cheats.len());
+    //println!("{:?}", cheats.len());
     //let mut map = HashMap::new();
     //let mut set = HashSet::new();
     //for cheat in cheats.iter() {
