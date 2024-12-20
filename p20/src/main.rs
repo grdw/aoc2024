@@ -1,8 +1,7 @@
 use std::cmp::Ordering;
 use std::fs;
-use std::collections::{BinaryHeap, HashMap};
+use std::collections::{BinaryHeap, HashMap, HashSet};
 
-const SIZE: i16 = 70;
 const DIRECTIONS: [Point; 4] = [
     (-1, 0),
     (0, 1),
@@ -23,7 +22,7 @@ impl Grid {
         Grid { size, vector }
     }
 
-    fn is_corrupted(&self, p: &Point) -> bool {
+    fn is_wall(&self, p: &Point) -> bool {
         self.vector[p.0 as usize][p.1 as usize] == '#'
     }
 
@@ -38,6 +37,22 @@ impl Grid {
         let x = p.1 as usize;
 
         (y * self.size) + x
+    }
+
+    fn id_is(&self, id: usize, search: char) -> bool {
+        let y = id / self.size;
+        let x = id % self.size;
+
+        if self.out_of_bounds(&(y as i16, x as i16)) {
+            return false
+        }
+
+        // If you're part of the outer wall
+        if y == 0 || y == self.size || x == 0 || x == self.size {
+            return false
+        }
+
+        self.vector[y][x] == search
     }
 
     fn lookup(&self, search: char) -> Point {
@@ -104,24 +119,24 @@ fn heuristic(s: &Point, e: &Point) -> usize {
     (dx + dy) as usize
 }
 
-fn reconstruct_path(map: &HashMap<usize, usize>, id: usize) -> usize {
-    let mut count = 0;
+fn reconstruct_path(map: &HashMap<usize, usize>, id: usize) -> Vec<usize> {
+    let mut route = vec![];
     let mut search = id;
     loop {
         let prev_id = map.get(&search);
         match prev_id {
             Some(x) => {
+                route.push(*x);
                 search = *x;
-                count += 1;
             },
             None => break
         }
     }
-    count
+    route
 }
 
 // Basic A* implementation
-fn route(grid: &mut Grid, cheat: Option<Vec<Point>>) -> Option<usize> {
+fn route(grid: &mut Grid, cheat: &Vec<usize>) -> Option<Vec<usize>> {
     let start = grid.lookup('S');
     let end = grid.lookup('E');
     let mut heap = BinaryHeap::new();
@@ -145,12 +160,16 @@ fn route(grid: &mut Grid, cheat: Option<Vec<Point>>) -> Option<usize> {
         for (ty, tx) in &DIRECTIONS {
             let np = (node.position.0 + ty, node.position.1 + tx);
 
-            if grid.out_of_bounds(&np) || grid.is_corrupted(&np)  {
+            if grid.out_of_bounds(&np) {
                 continue
             }
 
-            let next_id = grid.id(&np);
             let new_score = g_score[id] + 1;
+            let next_id = grid.id(&np);
+
+            if grid.is_wall(&np) && !cheat.contains(&next_id) {
+                continue
+            }
 
             if new_score < g_score[next_id] {
                 came_from.insert(next_id, id);
@@ -168,13 +187,60 @@ fn route(grid: &mut Grid, cheat: Option<Vec<Point>>) -> Option<usize> {
 }
 
 fn cheat_count(grid: &mut Grid, seconds: usize) -> usize {
-    let regular = route(grid, None);
-    println!("{:?}", regular);
-    0
+    let mut count = 0;
+    let regular = route(grid, &vec![]).unwrap();
+    let mut cheats = HashSet::new();
+    let mut starts = HashSet::new();
+
+    let t_no_cheating = regular.len();
+    println!("No cheats: {:?}", t_no_cheating);
+
+    for r in regular {
+        let tries = vec![
+            r - 1,
+            r + 1,
+            r - grid.size,
+            r + grid.size
+        ];
+
+        for t in tries {
+            if grid.id_is(t, '#') {
+                starts.insert(t);
+            }
+        }
+    }
+
+    for s in starts {
+        let tries = vec![
+            s - 1,
+            s + 1,
+            s - grid.size,
+            s + grid.size
+        ];
+
+        for t in tries {
+            if grid.id_is(t, '.') {
+                cheats.insert(vec![s, t]);
+                break;
+            }
+        }
+    }
+
+    for cheat in cheats.iter() {
+        let cheated_route = route(grid, cheat).unwrap();
+        let saved = t_no_cheating - cheated_route.len();
+
+        if saved >= seconds {
+            println!("{:?} saved you {} sec", cheat, saved);
+            count += 1;
+        }
+    }
+
+    count
 }
 
 #[test]
 fn test_cheat_count() {
     let mut grid = parse("1");
-    assert_eq!(cheat_count(&mut grid, 6), 28);
+    assert_eq!(cheat_count(&mut grid, 12), 8);
 }
