@@ -187,13 +187,12 @@ fn route(grid: &mut Grid, cheat: &Vec<usize>) -> Option<Vec<usize>> {
 }
 
 fn cheat_count(grid: &mut Grid, seconds: usize) -> usize {
-    let mut count = 0;
     let regular = route(grid, &vec![]).unwrap();
+    let t_no_cheating = regular.len();
+
+    let mut count = 0;
     let mut cheats = HashSet::new();
     let mut starts = HashSet::new();
-
-    let t_no_cheating = regular.len();
-    println!("No cheats: {:?}", t_no_cheating);
 
     for r in regular {
         let tries = vec![
@@ -231,7 +230,6 @@ fn cheat_count(grid: &mut Grid, seconds: usize) -> usize {
         let saved = t_no_cheating - cheated_route.len();
 
         if saved >= seconds {
-            println!("{:?} saved you {} sec", cheat, saved);
             count += 1;
         }
     }
