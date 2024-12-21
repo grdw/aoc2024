@@ -264,6 +264,7 @@ fn cheat_count_revised(grid: &Grid, max: usize, seconds: usize) -> usize {
     let goal = grid.lookup('E');
     let regular = route(grid).unwrap();
     let t_no_cheating = regular.len();
+    let roof = t_no_cheating - seconds + 1;
 
     let mut count = 0;
     let mut cheat_list = vec![];
@@ -280,14 +281,18 @@ fn cheat_count_revised(grid: &Grid, max: usize, seconds: usize) -> usize {
                 }
 
                 let m = manhattan_dist(&start, &cheat_end);
+
                 if m > max {
                     continue
                 }
 
                 let total = i + m;
-                if total >= (t_no_cheating - seconds + 1) {
+                let to_end = manhattan_dist(&cheat_end, &goal);
+
+                if total + to_end >= roof {
                     continue
                 }
+
                 cheat_list.push((total, cheat_end));
             }
         }
@@ -306,7 +311,7 @@ fn cheat_count_revised(grid: &Grid, max: usize, seconds: usize) -> usize {
             &cheat_end,
             &goal,
             i,
-            t_no_cheating - seconds + 1
+            roof
         ).unwrap();
 
         let total = i + route_to_end;
