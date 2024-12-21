@@ -204,9 +204,7 @@ fn route(grid: &Grid) -> Option<Vec<isize>> {
 fn route_with_cheat(
     grid: &Grid,
     start: &Point,
-    end: &Point,
-    length: usize,
-    max: usize) -> Option<usize> {
+    end: &Point) -> Option<usize> {
 
     let mut heap = BinaryHeap::new();
     let mut came_from: HashMap<usize, usize> = HashMap::new();
@@ -214,7 +212,7 @@ fn route_with_cheat(
 
     heap.push(Node {
         position: *start,
-        cost: length,
+        cost: 0,
         estimate: manhattan_dist(&start, &end),
     });
 
@@ -222,10 +220,6 @@ fn route_with_cheat(
 
     while let Some(node) = heap.pop() {
         let id = grid.id(&node.position);
-
-        if node.cost > max {
-            return Some(max);
-        }
 
         if &node.position == end {
             return Some(path_len(&came_from, id));
@@ -267,7 +261,7 @@ fn cheat_count_revised(grid: &Grid, max: usize, seconds: usize) -> usize {
     let roof = t_no_cheating - seconds + 1;
 
     let mut count = 0;
-    let mut cheat_list = vec![];
+    let mut cheat_list = HashMap::new();
 
     for i in (0..regular.len()).rev() {
         let id = regular[i] as usize;
@@ -293,38 +287,32 @@ fn cheat_count_revised(grid: &Grid, max: usize, seconds: usize) -> usize {
                     continue
                 }
 
-                cheat_list.push((total, cheat_end));
+                cheat_list
+                    .entry(cheat_end)
+                    .and_modify(|n: &mut Vec<usize>| n.push(total))
+                    .or_insert(vec![total]);
             }
         }
     }
 
-    let mut n = 0;
-    let q = cheat_list.len();
-
-    for (i, cheat_end) in cheat_list.into_iter() {
-        if n % 1000 == 0 {
-            println!("{} / {}", n, q);
-        }
-
+    for (cheat_end, totals) in cheat_list.into_iter() {
         let route_to_end = route_with_cheat(
             grid,
             &cheat_end,
-            &goal,
-            i,
-            roof
+            &goal
         ).unwrap();
 
-        let total = i + route_to_end;
+        for i in totals {
+            let total = i + route_to_end;
 
-        if total < t_no_cheating {
-            let diff = t_no_cheating - total;
+            if total < t_no_cheating {
+                let diff = t_no_cheating - total;
 
-            if diff >= seconds {
-                count += 1
+                if diff >= seconds {
+                    count += 1
+                }
             }
         }
-
-        n += 1;
     }
 
     count
