@@ -14,15 +14,6 @@ fn main() {
 
 fn shortest_inputs(input: &'static str, n: usize) -> usize {
     let mut total = 0;
-    let mut i = 0;
-
-    //let valids: Vec<usize> = vec![
-    //    82050061710,
-    //    72242026390,
-    //    81251039228,
-    //    80786362258,
-    //    77985628636
-    //];
 
     for line in fs::read_to_string(input).unwrap().lines() {
         let mut line = line.to_string();
@@ -30,7 +21,6 @@ fn shortest_inputs(input: &'static str, n: usize) -> usize {
 
         line.retain(|x| x.is_numeric());
         let t = line.parse::<usize>().unwrap();
-        //println!("{:?}", dir - valids[i]);
 
         total += t * dir;
     }
@@ -86,6 +76,12 @@ fn to_my_input(numbers: &String, n: usize) -> usize {
     len
 }
 
+#[test]
+fn test_to_my_input() {
+    let input = String::from("026A");
+    assert_eq!(to_my_input(&input, 4), 402);
+}
+
 fn to_chunks(keypad: &'static str, numbers: &String) -> Vec<String> {
     let mut result = vec![];
     let mut start = 'A';
@@ -128,7 +124,7 @@ fn to_result(keypad: &'static str, start: char, cs: char) -> String {
     } else {
         let dir_y = pos(DIRECTIONAL, ns as char);
         let dir_x = pos(DIRECTIONAL, ew as char);
-        let dir_a = pos(DIRECTIONAL, 'A');
+        let dir_a = pos(DIRECTIONAL, '>'); // WHY DOES THIS WORK
 
         let my = manhattan_dist(&dir_y, &dir_a);
         let mx = manhattan_dist(&dir_x, &dir_a);
