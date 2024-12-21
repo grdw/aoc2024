@@ -150,7 +150,7 @@ fn path_len(map: &HashMap<usize, usize>, id: usize) -> usize {
 }
 
 // Basic A* implementation
-fn route(grid: &Grid, cheat: &Vec<usize>) -> Option<Vec<isize>> {
+fn route(grid: &Grid) -> Option<Vec<isize>> {
     let start = grid.lookup('S');
     let end = grid.lookup('E');
     let mut heap = BinaryHeap::new();
@@ -181,7 +181,7 @@ fn route(grid: &Grid, cheat: &Vec<usize>) -> Option<Vec<isize>> {
             let new_score = g_score[id] + 1;
             let next_id = grid.id(&np);
 
-            if grid.is_wall(&np) && !cheat.contains(&next_id) {
+            if grid.is_wall(&np) {
                 continue
             }
 
@@ -204,7 +204,9 @@ fn route(grid: &Grid, cheat: &Vec<usize>) -> Option<Vec<isize>> {
 fn route_with_cheat(
     grid: &Grid,
     start: &Point,
-    end: &Point) -> Option<usize> {
+    end: &Point,
+    length: usize,
+    max: usize) -> Option<usize> {
 
     let mut heap = BinaryHeap::new();
     let mut came_from: HashMap<usize, usize> = HashMap::new();
@@ -212,7 +214,7 @@ fn route_with_cheat(
 
     heap.push(Node {
         position: *start,
-        cost: 0,
+        cost: length,
         estimate: manhattan_dist(&start, &end),
     });
 
@@ -220,6 +222,10 @@ fn route_with_cheat(
 
     while let Some(node) = heap.pop() {
         let id = grid.id(&node.position);
+
+        if node.cost > max {
+            return Some(max);
+        }
 
         if &node.position == end {
             return Some(path_len(&came_from, id));
@@ -256,7 +262,7 @@ fn route_with_cheat(
 
 fn cheat_count_revised(grid: &Grid, max: usize, seconds: usize) -> usize {
     let goal = grid.lookup('E');
-    let regular = route(grid, &vec![]).unwrap();
+    let regular = route(grid).unwrap();
     let t_no_cheating = regular.len();
 
     let mut count = 0;
@@ -299,6 +305,8 @@ fn cheat_count_revised(grid: &Grid, max: usize, seconds: usize) -> usize {
             grid,
             &cheat_end,
             &goal,
+            i,
+            t_no_cheating - seconds + 1
         ).unwrap();
 
         let total = i + route_to_end;
