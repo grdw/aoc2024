@@ -9,7 +9,7 @@ type Point = (isize, isize);
 
 fn main() {
     println!("p1 {}", shortest_inputs("input", 2));
-    //println!("p2 {}", shortest_inputs("input", 25));
+    println!("p2 {}", shortest_inputs("input", 25));
 }
 
 fn shortest_inputs(input: &'static str, n: usize) -> usize {
@@ -31,7 +31,7 @@ fn shortest_inputs(input: &'static str, n: usize) -> usize {
 #[test]
 fn test_shortest_inputs() {
     assert_eq!(shortest_inputs("1", 2), 126384);
-    assert_eq!(shortest_inputs("1", 25), 126384);
+    assert_eq!(shortest_inputs("1", 25), 175396398527088);
 }
 
 // This is the Manhattan distance
@@ -44,39 +44,39 @@ fn manhattan_dist(s: &Point, e: &Point) -> usize {
 fn to_my_input(
     numbers: &String,
     n: usize,
-    map: &mut HashMap<String, String>) -> usize {
+    map: &mut HashMap<String, usize>) -> usize {
 
     let mut len = 0;
     let dir = to_chunks(NUMERIC, numbers);
-    let mut queue = vec![];
 
-    for d in dir.into_iter() {
-        queue.insert(0, (d, 0));
+    // Warming the cash, counts as 1 step
+    let mut map = HashMap::new();
+    for d in &dir {
+        let dir_chunks = to_chunks(DIRECTIONAL, d);
+
+        for chunk in dir_chunks {
+            map.entry(chunk).and_modify(|n| *n += 1).or_insert(1);
+        }
     }
 
-    while let Some((d, depth)) = queue.pop() {
-        if depth == n {
-            len += d.len();
-            continue
-        }
-
-        if let Some(cached_chunks) = map.get(&d) {
-            for chunk in cached_chunks.split_inclusive('A') {
-                queue.push((chunk.to_string(), depth + 1));
+    for _ in 0..n-1 {
+        let mut new_map = HashMap::new();
+        for (key, value) in map {
+            let chunks = to_chunks(DIRECTIONAL, &key);
+            for c in chunks {
+                new_map
+                    .entry(c)
+                    .and_modify(|n| *n += value)
+                    .or_insert(value);
             }
-
-            continue
         }
 
-        let chunks = to_directional(DIRECTIONAL, &d);
-        map.insert(d.to_string(), chunks.clone());
-        for chunk in chunks.split_inclusive('A') {
-            let c = chunk.to_string();
-            queue.push((c, depth + 1));
-        }
-
+        map = new_map;
     }
-    println!("{:?}", len);
+
+    for (key, value) in &map {
+        len += key.len() * value
+    }
 
     len
 }
@@ -95,8 +95,8 @@ fn to_chunks(keypad: &'static str, numbers: &String) -> Vec<String> {
     let mut start = 'A';
 
     for cs in numbers.chars() {
-        let ((c1, n1), (c2, n2)) = to_result(keypad, start, cs);
-        println!("{} {} | {} {}", c1, n1, c2, n2);
+        let q = to_result(keypad, start, cs);
+        result.push(q);
 
         start = cs;
     }
@@ -109,14 +109,8 @@ fn to_directional(keypad: &'static str, numbers: &str) -> String {
     let mut start = 'A';
 
     for cs in numbers.chars() {
-        let ((c1, n1), (c2, n2)) = to_result(keypad, start, cs);
-        let a = vec![c1; n1];
-        let b = vec![c2; n2];
-        let c: String = a.iter().collect();
-        let d: String = b.iter().collect();
-        result.push_str(&c);
-        result.push_str(&d);
-        result.push('A');
+        let q = to_result(keypad, start, cs);
+        result.push_str(&q);
 
         start = cs;
     }
@@ -124,41 +118,50 @@ fn to_directional(keypad: &'static str, numbers: &str) -> String {
     result
 }
 
-fn to_result(keypad: &'static str, start: char, cs: char) -> (
-    (char, usize), (char, usize)
-) {
+fn to_result(keypad: &'static str, start: char, cs: char) -> String {
+    let mut result = String::new();
     let gap = pos(keypad, ' ');
     let sta = pos(keypad, start);
     let end = pos(keypad, cs);
     let (y, x) = (sta.0 - end.0, sta.1 - end.1);
 
-    let ns = if y > 0 { '^' } else { 'v' };
-    let ew = if x > 0 { '<' } else { '>' };
+    let ns = if y > 0 { b'^' } else { b'v' };
+    let ew = if x > 0 { b'<' } else { b'>' };
 
     let ya = y.abs() as usize;
     let xa = x.abs() as usize;
+
+    let py = String::from_utf8(vec![ns; ya]).unwrap();
+    let px = String::from_utf8(vec![ew; xa]).unwrap();
 
     let d1 = (sta.0, end.1);
     let d2 = (end.0, sta.1);
 
     if d1 == gap {
-        return ((ns, ya), (ew, xa))
+        result.push_str(&py);
+        result.push_str(&px);
     } else if d2 == gap {
-        return ((ew, xa), (ns, ya))
+        result.push_str(&px);
+        result.push_str(&py);
     } else {
-        let dir_y = pos(DIRECTIONAL, ns);
-        let dir_x = pos(DIRECTIONAL, ew);
+        let dir_y = pos(DIRECTIONAL, ns as char);
+        let dir_x = pos(DIRECTIONAL, ew as char);
         let dir_a = pos(DIRECTIONAL, 'A');
 
         let my = manhattan_dist(&dir_y, &dir_a);
         let mx = manhattan_dist(&dir_x, &dir_a);
 
         if my > mx {
-            return ((ns, ya), (ew, xa))
+            result.push_str(&py);
+            result.push_str(&px);
         } else {
-            return ((ew, xa), (ns, ya))
+            result.push_str(&px);
+            result.push_str(&py);
         }
     }
+
+    result.push('A');
+    result
 }
 
 fn pos(keypad: &'static str, lookup: char) -> (isize, isize) {
