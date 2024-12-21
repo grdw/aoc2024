@@ -261,6 +261,7 @@ fn cheat_count_revised(grid: &Grid, max: usize, seconds: usize) -> usize {
     let t_no_cheating = regular.len();
 
     let mut count = 0;
+    let mut cheat_list = vec![];
 
     for i in (0..regular.len()).rev() {
         let id = regular[i] as usize;
@@ -277,33 +278,53 @@ fn cheat_count_revised(grid: &Grid, max: usize, seconds: usize) -> usize {
                     continue
                 }
 
-                // current length is 'i'
-                // route from (y, x) to (ny, nx) with cheats
-                let cheated_route = route_with_cheat(
-                    grid,
-                    &start,
-                    &cheat_end,
-                    true
-                ).unwrap();
-
-                let route_to_end = route_with_cheat(
-                    grid,
-                    &cheat_end,
-                    &goal,
-                    false
-                ).unwrap();
-
-                let total = i + cheated_route + route_to_end;
-
-                if total < t_no_cheating {
-                    let diff = t_no_cheating - total;
-
-                    if diff >= seconds {
-                        count += 1
-                    }
-                }
+                cheat_list.push((i, start, cheat_end));
             }
         }
+    }
+
+    let mut n = 0;
+    let q = cheat_list.len();
+
+    for (i, start, cheat_end) in cheat_list.into_iter() {
+        let mut total = i;
+        // current length is 'i'
+        // route from (y, x) to (ny, nx) with cheats
+        let cheated_route = route_with_cheat(
+            grid,
+            &start,
+            &cheat_end,
+            true
+        ).unwrap();
+
+        total += cheated_route;
+
+        if total >= (t_no_cheating - seconds + 1) {
+            continue
+        }
+
+        if n % 1000 == 0 {
+            println!("{} / {}", n, q);
+        }
+
+        let route_to_end = route_with_cheat(
+            grid,
+            &cheat_end,
+            &goal,
+            false
+        ).unwrap();
+
+        total += route_to_end;
+
+        if total < t_no_cheating {
+            let diff = t_no_cheating - total;
+
+            if diff >= seconds {
+                count += 1
+            }
+        }
+
+        n += 1;
     }
 
     count
