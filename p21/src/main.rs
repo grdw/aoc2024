@@ -39,7 +39,7 @@ fn shortest_inputs(input: &'static str, n: usize) -> usize {
 
 #[test]
 fn test_shortest_inputs() {
-    //assert_eq!(shortest_inputs("1", 2), 126384);
+    assert_eq!(shortest_inputs("1", 2), 126384);
     assert_eq!(shortest_inputs("1", 25), 154115708116294);
 }
 
