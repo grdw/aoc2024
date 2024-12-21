@@ -54,7 +54,7 @@ fn to_my_input(numbers: &String, n: usize) -> usize {
     let mut len = 0;
     let dir = to_chunks(NUMERIC, numbers);
 
-    // Warming the cash, counts as 1 step
+    // Warming the cache, counts as 1 step
     let mut map = HashMap::new();
     for d in &dir {
         let dir_chunks = to_chunks(DIRECTIONAL, d);
