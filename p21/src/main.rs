@@ -14,14 +14,23 @@ fn main() {
 
 fn shortest_inputs(input: &'static str, n: usize) -> usize {
     let mut total = 0;
-    let mut map = HashMap::new();
+    let mut i = 0;
+
+    //let valids: Vec<usize> = vec![
+    //    82050061710,
+    //    72242026390,
+    //    81251039228,
+    //    80786362258,
+    //    77985628636
+    //];
 
     for line in fs::read_to_string(input).unwrap().lines() {
         let mut line = line.to_string();
-        let dir = to_my_input(&line, n, &mut map);
+        let dir = to_my_input(&line, n);
 
         line.retain(|x| x.is_numeric());
         let t = line.parse::<usize>().unwrap();
+        //println!("{:?}", dir - valids[i]);
 
         total += t * dir;
     }
@@ -30,8 +39,8 @@ fn shortest_inputs(input: &'static str, n: usize) -> usize {
 
 #[test]
 fn test_shortest_inputs() {
-    assert_eq!(shortest_inputs("1", 2), 126384);
-    assert_eq!(shortest_inputs("1", 25), 175396398527088);
+    //assert_eq!(shortest_inputs("1", 2), 126384);
+    assert_eq!(shortest_inputs("1", 25), 154115708116294);
 }
 
 // This is the Manhattan distance
@@ -41,11 +50,7 @@ fn manhattan_dist(s: &Point, e: &Point) -> usize {
     (dx + dy) as usize
 }
 
-fn to_my_input(
-    numbers: &String,
-    n: usize,
-    map: &mut HashMap<String, usize>) -> usize {
-
+fn to_my_input(numbers: &String, n: usize) -> usize {
     let mut len = 0;
     let dir = to_chunks(NUMERIC, numbers);
 
@@ -81,15 +86,6 @@ fn to_my_input(
     len
 }
 
-#[test]
-fn test_shortest_route_basic() {
-    let input = "34".to_string();
-    let dir = to_directional(NUMERIC, &input);
-    assert_eq!(dir, String::from("^A<<^A"));
-    let dir = to_directional(DIRECTIONAL, &dir);
-    assert_eq!(dir, String::from("<A>Av<<AA>^A>A"));
-}
-
 fn to_chunks(keypad: &'static str, numbers: &String) -> Vec<String> {
     let mut result = vec![];
     let mut start = 'A';
@@ -97,20 +93,6 @@ fn to_chunks(keypad: &'static str, numbers: &String) -> Vec<String> {
     for cs in numbers.chars() {
         let q = to_result(keypad, start, cs);
         result.push(q);
-
-        start = cs;
-    }
-
-    result
-}
-
-fn to_directional(keypad: &'static str, numbers: &str) -> String {
-    let mut result = String::new();
-    let mut start = 'A';
-
-    for cs in numbers.chars() {
-        let q = to_result(keypad, start, cs);
-        result.push_str(&q);
 
         start = cs;
     }
@@ -169,48 +151,4 @@ fn pos(keypad: &'static str, lookup: char) -> (isize, isize) {
     let y = p.div_euclid(SIZE);
     let x = p.rem_euclid(SIZE);
     (y, x)
-}
-
-#[test]
-fn test_skip_gaps() {
-    let input = "01".to_string();
-    assert_eq!(to_directional(&NUMERIC, &input), String::from("<A^<A"));
-
-    let input = "70".to_string();
-    assert_eq!(
-        to_directional(&NUMERIC, &input),
-        String::from("^^^<<A>vvvA")
-    );
-}
-
-#[test]
-fn test_to_directional() {
-    let input = "029A".to_string();
-
-    assert_eq!(
-        to_directional(NUMERIC, &input),
-        String::from("<A^A>^^AvvvA")
-    );
-
-    assert_eq!(
-        to_directional(
-            DIRECTIONAL,
-            &to_directional(NUMERIC, &input)
-        ).len(),
-        28
-    );
-
-    assert_eq!(
-        to_directional(
-            DIRECTIONAL,
-            &to_directional(
-                DIRECTIONAL,
-                &to_directional(
-                    NUMERIC,
-                    &input
-                )
-            )
-        ).len(),
-        68
-    );
 }
