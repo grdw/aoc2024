@@ -204,8 +204,7 @@ fn route(grid: &Grid, cheat: &Vec<usize>) -> Option<Vec<isize>> {
 fn route_with_cheat(
     grid: &Grid,
     start: &Point,
-    end: &Point,
-    skip: bool) -> Option<usize> {
+    end: &Point) -> Option<usize> {
 
     let mut heap = BinaryHeap::new();
     let mut came_from: HashMap<usize, usize> = HashMap::new();
@@ -235,7 +234,7 @@ fn route_with_cheat(
 
             let new_score = g_score[id] + 1;
             let next_id = grid.id(&np);
-            if grid.is_wall(&np) && !skip  {
+            if grid.is_wall(&np) {
                 continue
             }
 
@@ -274,11 +273,16 @@ fn cheat_count_revised(grid: &Grid, max: usize, seconds: usize) -> usize {
                     continue
                 }
 
-                if manhattan_dist(&start, &cheat_end) > max {
+                let m = manhattan_dist(&start, &cheat_end);
+                if m > max {
                     continue
                 }
 
-                cheat_list.push((i, start, cheat_end));
+                let total = i + m;
+                if total >= (t_no_cheating - seconds + 1) {
+                    continue
+                }
+                cheat_list.push((total, cheat_end));
             }
         }
     }
@@ -286,23 +290,7 @@ fn cheat_count_revised(grid: &Grid, max: usize, seconds: usize) -> usize {
     let mut n = 0;
     let q = cheat_list.len();
 
-    for (i, start, cheat_end) in cheat_list.into_iter() {
-        let mut total = i;
-        // current length is 'i'
-        // route from (y, x) to (ny, nx) with cheats
-        let cheated_route = route_with_cheat(
-            grid,
-            &start,
-            &cheat_end,
-            true
-        ).unwrap();
-
-        total += cheated_route;
-
-        if total >= (t_no_cheating - seconds + 1) {
-            continue
-        }
-
+    for (i, cheat_end) in cheat_list.into_iter() {
         if n % 1000 == 0 {
             println!("{} / {}", n, q);
         }
@@ -311,10 +299,9 @@ fn cheat_count_revised(grid: &Grid, max: usize, seconds: usize) -> usize {
             grid,
             &cheat_end,
             &goal,
-            false
         ).unwrap();
 
-        total += route_to_end;
+        let total = i + route_to_end;
 
         if total < t_no_cheating {
             let diff = t_no_cheating - total;
