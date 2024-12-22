@@ -97,8 +97,8 @@ impl PartialOrd for Node {
 fn main() {
     let grid = parse("input");
 
-    println!("p1 {}", cheat_count_revised(&grid, 2, 100));
-    println!("p2 {}", cheat_count_revised(&grid, 20, 100));
+    println!("p1 {}", cheat_count(&grid, 2, 100));
+    println!("p2 {}", cheat_count(&grid, 20, 100));
 }
 
 fn parse(input: &'static str) -> Grid {
@@ -236,14 +236,14 @@ fn route_with_cheat(
     None
 }
 
-fn cheat_count_revised(grid: &Grid, max: usize, seconds: usize) -> usize {
+fn cheat_count(grid: &Grid, cheat_time: usize, seconds: usize) -> usize {
     let goal = grid.lookup('E');
     let regular = route(grid).unwrap();
     let t_no_cheating = regular.len();
     let roof = t_no_cheating - seconds + 1;
 
     let mut count = 0;
-    let mut cheat_list = HashMap::new();
+    let mut cache = HashMap::new();
 
     for i in (0..regular.len()).rev() {
         let start = grid.to_point(regular[i]);
@@ -258,40 +258,39 @@ fn cheat_count_revised(grid: &Grid, max: usize, seconds: usize) -> usize {
 
                 let m = manhattan_dist(&start, &cheat_end);
 
-                if m > max {
+                if m > cheat_time {
                     continue
                 }
 
-                let total = i + m;
+                let mut total = i + m;
+
                 let to_end = manhattan_dist(&cheat_end, &goal);
 
                 if total + to_end >= roof {
                     continue
                 }
 
-                cheat_list
-                    .entry(cheat_end)
-                    .and_modify(|n: &mut Vec<usize>| n.push(total))
-                    .or_insert(vec![total]);
-            }
-        }
-    }
+                match cache.get(&cheat_end) {
+                    Some(goal_len) => total += goal_len,
+                    None => {
+                        let goal_len = route_with_cheat(
+                            grid,
+                            &cheat_end,
+                            &goal
+                        ).unwrap();
 
-    for (cheat_end, totals) in cheat_list.into_iter() {
-        let route_to_end = route_with_cheat(
-            grid,
-            &cheat_end,
-            &goal
-        ).unwrap();
+                        cache.insert(cheat_end, goal_len);
+                        total += goal_len;
+                    }
+                }
 
-        for i in totals {
-            let total = i + route_to_end;
+                if total >= t_no_cheating {
+                    continue
+                }
 
-            if total < t_no_cheating {
                 let diff = t_no_cheating - total;
-
                 if diff >= seconds {
-                    count += 1
+                    count += 1;
                 }
             }
         }
@@ -303,6 +302,6 @@ fn cheat_count_revised(grid: &Grid, max: usize, seconds: usize) -> usize {
 #[test]
 fn test_cheat_count_no_revised() {
     let grid = parse("1");
-    assert_eq!(cheat_count_revised(&grid, 20, 50), 285);
-    assert_eq!(cheat_count_revised(&grid, 2, 12), 8);
+    assert_eq!(cheat_count(&grid, 20, 50), 285);
+    assert_eq!(cheat_count(&grid, 2, 12), 8);
 }
