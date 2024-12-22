@@ -39,13 +39,6 @@ impl Grid {
         (y * self.size) + x
     }
 
-    fn to_point(&self, id: usize) -> Point {
-        let y = id / self.size;
-        let x = id % self.size;
-
-        (y as i16, x as i16)
-    }
-
     fn lookup(&self, search: char) -> Point {
         for y in 0..self.size {
             for x in 0..self.size {
@@ -117,79 +110,25 @@ fn manhattan_dist(s: &Point, e: &Point) -> usize {
     (dx + dy) as usize
 }
 
-fn reconstruct_path(map: &HashMap<usize, usize>, id: usize) -> Vec<usize> {
-    let mut route = vec![];
-    let mut search = id;
-    loop {
-        let prev_id = map.get(&search);
-        match prev_id {
-            Some(x) => {
-                route.insert(0, *x);
-                search = *x;
-            },
-            None => break
-        }
+fn simple_route(grid: &Grid, start: &Point, end: &Point) -> Vec<Point> {
+    let mut route: Vec<Point> = vec![*start];
+    let mut step = *start;
+
+    while step != *end {
+        let next = DIRECTIONS
+            .iter()
+            .map(|(ty, tx)| (step.0 + ty, step.1 + tx))
+            .find(|n| !grid.is_wall(&n) && !route.contains(&n))
+            .unwrap();
+
+        route.push(next);
+        step = next;
     }
     route
 }
 
 // Basic A* implementation
-fn route(grid: &Grid) -> Option<Vec<usize>> {
-    let start = grid.lookup('S');
-    let end = grid.lookup('E');
-    let mut heap = BinaryHeap::new();
-    let mut came_from: HashMap<usize, usize> = HashMap::new();
-    let mut g_score = vec![usize::MAX; grid.size * grid.size];
-
-    heap.push(Node {
-        position: start,
-        cost: 0,
-        estimate: manhattan_dist(&start, &end),
-    });
-
-    g_score[grid.id(&start)] = 0;
-
-    while let Some(node) = heap.pop() {
-        let id = grid.id(&node.position);
-        if node.position == end {
-            return Some(reconstruct_path(&came_from, id));
-        }
-
-        for (ty, tx) in &DIRECTIONS {
-            let np = (node.position.0 + ty, node.position.1 + tx);
-
-            if grid.out_of_bounds(&np) {
-                continue
-            }
-
-            let new_score = g_score[id] + 1;
-            let next_id = grid.id(&np);
-
-            if grid.is_wall(&np) {
-                continue
-            }
-
-            if new_score < g_score[next_id] {
-                came_from.insert(next_id, id);
-                g_score[next_id] = new_score;
-                heap.push(Node {
-                    position: np,
-                    cost: new_score,
-                    estimate: new_score + manhattan_dist(&np, &end),
-                });
-            }
-        }
-    }
-
-    None
-}
-
-// Basic A* implementation
-fn route_with_cheat(
-    grid: &Grid,
-    start: &Point,
-    end: &Point) -> Option<usize> {
-
+fn route(grid: &Grid, start: &Point, end: &Point) -> Option<usize> {
     let mut heap = BinaryHeap::new();
     let mut g_score = vec![usize::MAX; grid.size * grid.size];
 
@@ -237,8 +176,9 @@ fn route_with_cheat(
 }
 
 fn cheat_count(grid: &Grid, cheat_time: usize, seconds: usize) -> usize {
+    let start = grid.lookup('S');
     let goal = grid.lookup('E');
-    let regular = route(grid).unwrap();
+    let regular = simple_route(grid, &start, &goal);
     let t_no_cheating = regular.len();
     let roof = t_no_cheating - seconds + 1;
 
@@ -246,7 +186,7 @@ fn cheat_count(grid: &Grid, cheat_time: usize, seconds: usize) -> usize {
     let mut cache = HashMap::new();
 
     for i in (0..regular.len()).rev() {
-        let start = grid.to_point(regular[i]);
+        let start = regular[i];
 
         for ny in 0..grid.size {
             for nx in 0..grid.size {
@@ -273,7 +213,7 @@ fn cheat_count(grid: &Grid, cheat_time: usize, seconds: usize) -> usize {
                 match cache.get(&cheat_end) {
                     Some(goal_len) => total += goal_len,
                     None => {
-                        let goal_len = route_with_cheat(
+                        let goal_len = route(
                             grid,
                             &cheat_end,
                             &goal
