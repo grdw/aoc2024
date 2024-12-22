@@ -2,6 +2,8 @@ use std::fs;
 use std::collections::{HashMap, HashSet};
 
 const PRUNE: u64 = 16777216;
+const W_LEN: usize = 5;
+const MAX_SHIFT: i8 = 18;
 
 fn main() {
     println!("p1 {}", generate_range("input"));
@@ -30,26 +32,22 @@ fn generate_rec(n: u64, c: usize, steps: usize) -> u64 {
 
 fn most_bananas(input: &'static str, steps: usize) -> u64 {
     let mut map = HashMap::new();
-    let w_len = 5;
-    let max_shift = 18;
 
     for l in fs::read_to_string(input).unwrap().lines() {
         let mut m = l.parse::<u64>().unwrap();
         let mut set = HashSet::new();
-        let mut w = vec![0; w_len];
+        let mut w = vec![i8::MAX; W_LEN];
 
-        for s in 0..steps {
+        for _ in 0..steps {
             let z = (m % 10) as i8;
             m = generate(m);
             w.remove(0);
             w.push(z);
 
-            if s < w_len-1 { continue }
-
             let d: u32 = (0..w.len() - 1)
                 .map(|j| {
                     let k = j + 1;
-                    let d = ((w[k] - w[j]) + max_shift) as u32;
+                    let d = ((w[k] - w[j]) + MAX_SHIFT) as u32;
 
                     d.pow(k as u32)
                 })
