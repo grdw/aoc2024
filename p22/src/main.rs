@@ -34,12 +34,18 @@ fn most_bananas(input: &'static str, steps: usize) -> u64 {
     let max_shift = 18;
 
     for l in fs::read_to_string(input).unwrap().lines() {
-        let n = l.parse::<u64>().unwrap();
-        let b = generate_bananas(n, steps);
+        let mut m = l.parse::<u64>().unwrap();
         let mut set = HashSet::new();
+        let mut w = vec![0; w_len];
 
-        for i in 0..(b.len() - w_len) {
-            let w = &b[i..i+w_len];
+        for s in 0..steps {
+            let z = (m % 10) as i8;
+            m = generate(m);
+            w.remove(0);
+            w.push(z);
+
+            if s < w_len-1 { continue }
+
             let d: u32 = (0..w.len() - 1)
                 .map(|j| {
                     let k = j + 1;
@@ -63,16 +69,6 @@ fn most_bananas(input: &'static str, steps: usize) -> u64 {
     }
 
     *map.values().max().unwrap()
-}
-
-fn generate_bananas(n: u64, steps: usize) -> Vec<i8> {
-    let mut m = n;
-
-    (0..steps).map(|_| {
-        let z = (m % 10) as i8;
-        m = generate(m);
-        z
-    }).collect()
 }
 
 #[test]
