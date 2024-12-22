@@ -106,7 +106,6 @@ fn cheat_count(grid: &Grid, cheat_time: usize, seconds: usize) -> usize {
     let goal = grid.lookup('E');
     let regular = simple_route(grid, &start, &goal);
     let t_no_cheating = regular.len();
-    let roof = t_no_cheating - seconds + 1;
 
     let mut count = 0;
     let mut cache = HashMap::new();
@@ -128,34 +127,27 @@ fn cheat_count(grid: &Grid, cheat_time: usize, seconds: usize) -> usize {
                     continue
                 }
 
-                let mut total = i + m;
+                let goal_len =
+                    match cache.get(&cheat_end) {
+                        Some(goal_len) => *goal_len,
+                        None => {
+                            let q = regular
+                                .iter()
+                                .position(|&p| p == cheat_end)
+                                .unwrap();
 
-                let to_end = manhattan_dist(&cheat_end, &goal);
+                            let goal_len = regular.len() - q - 1;
+                            cache.insert(cheat_end, goal_len);
+                            goal_len
+                        }
+                    };
 
-                if total + to_end >= roof {
+                let subtotal = i + m + goal_len;
+                if subtotal >= t_no_cheating {
                     continue
                 }
 
-                match cache.get(&cheat_end) {
-                    Some(goal_len) => total += goal_len,
-                    None => {
-                        let q = regular
-                            .iter()
-                            .position(|&p| p == cheat_end)
-                            .unwrap();
-
-                        let goal_len = regular.len() - q - 1;
-                        cache.insert(cheat_end, goal_len);
-                        total += goal_len;
-                    }
-                }
-
-                if total >= t_no_cheating {
-                    continue
-                }
-
-                let diff = t_no_cheating - total;
-                if diff >= seconds {
+                if (t_no_cheating - subtotal) >= seconds {
                     count += 1;
                 }
             }
