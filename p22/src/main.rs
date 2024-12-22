@@ -3,7 +3,7 @@ use std::collections::{HashMap, HashSet};
 
 const PRUNE: u64 = 16777216;
 const W_LEN: usize = 5;
-const MAX_SHIFT: i8 = 18;
+const MAX_SHIFT: i16 = 18;
 
 fn main() {
     println!("p1 {}", generate_range("input"));
@@ -30,16 +30,16 @@ fn generate_rec(n: u64, c: usize, steps: usize) -> u64 {
     generate_rec(generate(n), c + 1, steps)
 }
 
-fn most_bananas(input: &'static str, steps: usize) -> u64 {
+fn most_bananas(input: &'static str, steps: usize) -> i16 {
     let mut map = HashMap::new();
+    let mut set = HashSet::new();
 
     for l in fs::read_to_string(input).unwrap().lines() {
         let mut m = l.parse::<u64>().unwrap();
-        let mut set = HashSet::new();
-        let mut w = vec![i8::MAX; W_LEN];
+        let mut w = vec![i16::MAX; W_LEN];
 
         for _ in 0..steps {
-            let z = (m % 10) as i8;
+            let z = (m % 10) as i16;
             m = generate(m);
             w.remove(0);
             w.push(z);
@@ -57,13 +57,12 @@ fn most_bananas(input: &'static str, steps: usize) -> u64 {
                 continue
             }
 
-            let bananas = w[w.len() - 1] as u64;
+            let bc = w[w.len() - 1];
             set.insert(d);
-            map
-                .entry(d)
-                .and_modify(|n| *n += bananas)
-                .or_insert(bananas);
+            map.entry(d).and_modify(|n| *n += bc).or_insert(bc);
         }
+
+        set.clear();
     }
 
     *map.values().max().unwrap()
