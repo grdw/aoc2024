@@ -44,22 +44,6 @@ impl Grid {
         }
         return (0, 0)
     }
-
-    #[allow(dead_code)]
-    fn debug(&self, points: &Vec<isize>, c: char) {
-        for y in 0..self.size {
-            for x in 0..self.size {
-                let did = self.id(&(y as i16, x as i16)) as isize;
-
-                if points.iter().find(|&&id| did == id).is_some() {
-                    print!("{}", c);
-                } else {
-                    print!("{}", self.vector[y][x]);
-                }
-            }
-            println!("");
-        }
-    }
 }
 
 fn main() {
