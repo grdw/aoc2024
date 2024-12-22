@@ -95,25 +95,13 @@ fn test_generate_bananas() {
 }
 
 fn generate(n: u64) -> u64 {
-    step3(step2(step1(n)))
+    let m = mix_prune(n * 64, n);
+    let o = mix_prune(m / 32, m);
+    mix_prune(o * 2048, o)
 }
 
-fn step1(n: u64) -> u64 {
-    let m = n * 64;
-    let o = m ^ n;
-    o % PRUNE
-}
-
-fn step2(n: u64) -> u64 {
-    let m = n / 32;
-    let o = m ^ n;
-    o % PRUNE
-}
-
-fn step3(n: u64) -> u64 {
-    let m = n * 2048;
-    let o = m ^ n;
-    o % PRUNE
+fn mix_prune(m: u64, n: u64) -> u64 {
+    (m ^ n) % PRUNE
 }
 
 #[test]
