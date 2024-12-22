@@ -66,18 +66,13 @@ fn most_bananas(input: &'static str, steps: usize) -> u64 {
 }
 
 fn generate_bananas(n: u64, steps: usize) -> Vec<i8> {
-    let mut i = 0;
     let mut m = n;
-    let mut diffs = vec![];
 
-    while i <= steps {
+    (0..steps).map(|_| {
         let z = (m % 10) as i8;
         m = generate(m);
-        diffs.push(z);
-        i += 1;
-    }
-
-    diffs
+        z
+    }).collect()
 }
 
 #[test]
