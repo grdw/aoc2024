@@ -62,15 +62,7 @@ fn most_bananas(input: &'static str, steps: usize) -> u64 {
         }
     }
 
-    let mut max = 0;
-
-    for value in map.values() {
-        if *value > max {
-            max = *value;
-        }
-    }
-
-    max
+    *map.values().max().unwrap()
 }
 
 fn generate_bananas(n: u64, steps: usize) -> Vec<i8> {
