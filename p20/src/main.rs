@@ -9,6 +9,8 @@ const DIRECTIONS: [Point; 4] = [
 ];
 
 type Point = (i16, i16);
+type Route = Vec<Point>;
+type Cache = HashMap<Point, usize>;
 
 struct Grid {
     vector: Vec<Vec<char>>,
@@ -84,11 +86,14 @@ fn manhattan_dist(s: &Point, e: &Point) -> usize {
 }
 
 // Only useful if there's a single direction to walk in from 'start'
-fn simple_route(grid: &Grid, start: &Point, end: &Point) -> Vec<Point> {
-    let mut route: Vec<Point> = vec![*start];
-    let mut step = *start;
+fn simple_route(grid: &Grid) -> Route {
+    let start = grid.lookup('S');
+    let end = grid.lookup('E');
 
-    while step != *end {
+    let mut route: Vec<Point> = vec![start];
+    let mut step = start;
+
+    while step != end {
         let next = DIRECTIONS
             .iter()
             .map(|(ty, tx)| (step.0 + ty, step.1 + tx))
@@ -102,16 +107,14 @@ fn simple_route(grid: &Grid, start: &Point, end: &Point) -> Vec<Point> {
 }
 
 fn cheat_count(grid: &Grid, cheat_time: usize, seconds: usize) -> usize {
-    let start = grid.lookup('S');
-    let goal = grid.lookup('E');
-    let regular = simple_route(grid, &start, &goal);
-    let t_no_cheating = regular.len();
+    let route = simple_route(grid);
+    let t_no_cheating = route.len();
 
     let mut count = 0;
     let mut cache = HashMap::new();
 
-    for i in (0..regular.len()).rev() {
-        let start = regular[i];
+    for i in (0..route.len()).rev() {
+        let start = route[i];
 
         for ny in 0..grid.size {
             for nx in 0..grid.size {
@@ -127,22 +130,9 @@ fn cheat_count(grid: &Grid, cheat_time: usize, seconds: usize) -> usize {
                     continue
                 }
 
-                let goal_len =
-                    match cache.get(&cheat_end) {
-                        Some(goal_len) => *goal_len,
-                        None => {
-                            let q = regular
-                                .iter()
-                                .position(|&p| p == cheat_end)
-                                .unwrap();
-
-                            let goal_len = regular.len() - q - 1;
-                            cache.insert(cheat_end, goal_len);
-                            goal_len
-                        }
-                    };
-
+                let goal_len = goal_len(&route, &cheat_end, &mut cache);
                 let subtotal = i + m + goal_len;
+
                 if subtotal >= t_no_cheating {
                     continue
                 }
@@ -155,6 +145,22 @@ fn cheat_count(grid: &Grid, cheat_time: usize, seconds: usize) -> usize {
     }
 
     count
+}
+
+fn goal_len(route: &Route, point: &Point, cache: &mut Cache) -> usize {
+    match cache.get(point) {
+        Some(goal_len) => *goal_len,
+        None => {
+            let q = route
+                .iter()
+                .position(|p| p == point)
+                .unwrap();
+
+            let goal_len = route.len() - q - 1;
+            cache.insert(*point, goal_len);
+            goal_len
+        }
+    }
 }
 
 #[test]
