@@ -30,25 +30,31 @@ fn generate_rec(n: u64, c: usize, steps: usize) -> u64 {
 
 fn most_bananas(input: &'static str, steps: usize) -> u64 {
     let mut map = HashMap::new();
+    let w_len = 5;
+    let max_shift = 18;
 
     for l in fs::read_to_string(input).unwrap().lines() {
         let n = l.parse::<u64>().unwrap();
         let b = generate_bananas(n, steps);
         let mut set = HashSet::new();
 
-        for i in 0..(b.len() - 5) {
-            let window = &b[i..i+5];
-            let mut d = vec![];
-            for j in 0..window.len() - 1  {
-                d.push(window[j + 1] - window[j]);
-            }
+        for i in 0..(b.len() - w_len) {
+            let w = &b[i..i+w_len];
+            let d: u32 = (0..w.len() - 1)
+                .map(|j| {
+                    let k = j + 1;
+                    let d = ((w[k] - w[j]) + max_shift) as u32;
+
+                    d.pow(k as u32)
+                })
+                .sum();
 
             if set.contains(&d) {
                 continue
             }
 
-            let bananas = window[window.len() - 1] as u64;
-            set.insert(d.clone());
+            let bananas = w[w.len() - 1] as u64;
+            set.insert(d);
             map
                 .entry(d)
                 .and_modify(|n| *n += bananas)
