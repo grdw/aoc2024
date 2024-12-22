@@ -27,13 +27,6 @@ impl Grid {
         self.vector[p.0 as usize][p.1 as usize] == '#'
     }
 
-    fn id(&self, p: &Point) -> usize {
-        let y = p.0 as usize;
-        let x = p.1 as usize;
-
-        (y * self.size) + x
-    }
-
     fn lookup(&self, search: char) -> Point {
         for y in 0..self.size {
             for x in 0..self.size {
@@ -48,9 +41,10 @@ impl Grid {
 
 fn main() {
     let grid = parse("input");
+    let route = simple_route(&grid);
 
-    println!("p1 {}", cheat_count(&grid, 2, 100));
-    println!("p2 {}", cheat_count(&grid, 20, 100));
+    println!("p1 {}", cheat_count(&grid, &route, 2, 100));
+    println!("p2 {}", cheat_count(&grid, &route, 20, 100));
 }
 
 fn parse(input: &'static str) -> Grid {
@@ -90,8 +84,7 @@ fn simple_route(grid: &Grid) -> Route {
     route
 }
 
-fn cheat_count(grid: &Grid, cheat_time: usize, seconds: usize) -> usize {
-    let route = simple_route(grid);
+fn cheat_count(grid: &Grid, route: &Route, c: usize, s: usize) -> usize {
     let t_no_cheating = route.len();
 
     let mut count = 0;
@@ -110,7 +103,7 @@ fn cheat_count(grid: &Grid, cheat_time: usize, seconds: usize) -> usize {
 
                 let m = manhattan_dist(&start, &cheat_end);
 
-                if m > cheat_time {
+                if m > c {
                     continue
                 }
 
@@ -121,7 +114,7 @@ fn cheat_count(grid: &Grid, cheat_time: usize, seconds: usize) -> usize {
                     continue
                 }
 
-                if (t_no_cheating - subtotal) >= seconds {
+                if (t_no_cheating - subtotal) >= s {
                     count += 1;
                 }
             }
@@ -150,6 +143,7 @@ fn goal_len(route: &Route, point: &Point, cache: &mut Cache) -> usize {
 #[test]
 fn test_cheat_count_no_revised() {
     let grid = parse("1");
-    assert_eq!(cheat_count(&grid, 20, 50), 285);
-    assert_eq!(cheat_count(&grid, 2, 12), 8);
+    let route = simple_route(&grid);
+    assert_eq!(cheat_count(&grid, &route, 20, 50), 285);
+    assert_eq!(cheat_count(&grid, &route, 2, 12), 8);
 }
