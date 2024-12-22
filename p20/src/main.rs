@@ -1,6 +1,5 @@
-use std::cmp::Ordering;
 use std::fs;
-use std::collections::{BinaryHeap, HashMap};
+use std::collections::{HashMap};
 
 const DIRECTIONS: [Point; 4] = [
     (-1, 0),
@@ -24,12 +23,6 @@ impl Grid {
 
     fn is_wall(&self, p: &Point) -> bool {
         self.vector[p.0 as usize][p.1 as usize] == '#'
-    }
-
-    fn out_of_bounds(&self, p: &Point) -> bool {
-        let s = self.size as i16;
-
-        p.0 < 0 || p.1 < 0 || p.0 >= s || p.1 >= s
     }
 
     fn id(&self, p: &Point) -> usize {
@@ -64,26 +57,6 @@ impl Grid {
             }
             println!("");
         }
-    }
-}
-
-#[derive(Copy, Clone, Eq, PartialEq)]
-struct Node {
-    position: Point,
-    cost: usize, // g-score: cost from start to this node
-    estimate: usize, // f-score: g-score + heuristic estimate to goal
-}
-
-impl Ord for Node {
-    fn cmp(&self, other: &Self) -> Ordering {
-        other.estimate.cmp(&self.estimate) // Reverse ordering for min-heap behavior
-            .then_with(|| other.cost.cmp(&self.cost))
-    }
-}
-
-impl PartialOrd for Node {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(self.cmp(other))
     }
 }
 
@@ -128,54 +101,6 @@ fn simple_route(grid: &Grid, start: &Point, end: &Point) -> Vec<Point> {
     route
 }
 
-// Basic A* implementation
-fn route(grid: &Grid, start: &Point, end: &Point) -> Option<usize> {
-    let mut heap = BinaryHeap::new();
-    let mut g_score = vec![usize::MAX; grid.size * grid.size];
-
-    heap.push(Node {
-        position: *start,
-        cost: 0,
-        estimate: manhattan_dist(&start, &end),
-    });
-
-    g_score[grid.id(&start)] = 0;
-
-    while let Some(node) = heap.pop() {
-        let id = grid.id(&node.position);
-
-        if &node.position == end {
-            return Some(g_score[id]);
-        }
-
-        for (ty, tx) in &DIRECTIONS {
-            let np = (node.position.0 + ty, node.position.1 + tx);
-
-            if grid.out_of_bounds(&np) {
-                continue
-            }
-
-            let new_score = g_score[id] + 1;
-            let next_id = grid.id(&np);
-            if grid.is_wall(&np) {
-                continue
-            }
-
-            if new_score < g_score[next_id] {
-                g_score[next_id] = new_score;
-
-                heap.push(Node {
-                    position: np,
-                    cost: new_score,
-                    estimate: new_score + manhattan_dist(&np, &end),
-                });
-            }
-        }
-    }
-
-    None
-}
-
 fn cheat_count(grid: &Grid, cheat_time: usize, seconds: usize) -> usize {
     let start = grid.lookup('S');
     let goal = grid.lookup('E');
@@ -214,12 +139,12 @@ fn cheat_count(grid: &Grid, cheat_time: usize, seconds: usize) -> usize {
                 match cache.get(&cheat_end) {
                     Some(goal_len) => total += goal_len,
                     None => {
-                        let goal_len = route(
-                            grid,
-                            &cheat_end,
-                            &goal
-                        ).unwrap();
+                        let q = regular
+                            .iter()
+                            .position(|&p| p == cheat_end)
+                            .unwrap();
 
+                        let goal_len = regular.len() - q - 1;
                         cache.insert(cheat_end, goal_len);
                         total += goal_len;
                     }
