@@ -117,30 +117,14 @@ fn manhattan_dist(s: &Point, e: &Point) -> usize {
     (dx + dy) as usize
 }
 
-fn reconstruct_path(map: &HashMap<usize, usize>, id: usize) -> Vec<isize> {
+fn reconstruct_path(map: &HashMap<usize, usize>, id: usize) -> Vec<usize> {
     let mut route = vec![];
     let mut search = id;
     loop {
         let prev_id = map.get(&search);
         match prev_id {
             Some(x) => {
-                route.insert(0, *x as isize);
-                search = *x;
-            },
-            None => break
-        }
-    }
-    route
-}
-
-fn path_len(map: &HashMap<usize, usize>, id: usize) -> usize {
-    let mut route = 0;
-    let mut search = id;
-    loop {
-        let prev_id = map.get(&search);
-        match prev_id {
-            Some(x) => {
-                route += 1;
+                route.insert(0, *x);
                 search = *x;
             },
             None => break
@@ -150,7 +134,7 @@ fn path_len(map: &HashMap<usize, usize>, id: usize) -> usize {
 }
 
 // Basic A* implementation
-fn route(grid: &Grid) -> Option<Vec<isize>> {
+fn route(grid: &Grid) -> Option<Vec<usize>> {
     let start = grid.lookup('S');
     let end = grid.lookup('E');
     let mut heap = BinaryHeap::new();
@@ -207,7 +191,6 @@ fn route_with_cheat(
     end: &Point) -> Option<usize> {
 
     let mut heap = BinaryHeap::new();
-    let mut came_from: HashMap<usize, usize> = HashMap::new();
     let mut g_score = vec![usize::MAX; grid.size * grid.size];
 
     heap.push(Node {
@@ -222,7 +205,7 @@ fn route_with_cheat(
         let id = grid.id(&node.position);
 
         if &node.position == end {
-            return Some(path_len(&came_from, id));
+            return Some(g_score[id]);
         }
 
         for (ty, tx) in &DIRECTIONS {
@@ -239,7 +222,6 @@ fn route_with_cheat(
             }
 
             if new_score < g_score[next_id] {
-                came_from.insert(next_id, id);
                 g_score[next_id] = new_score;
 
                 heap.push(Node {
@@ -264,12 +246,12 @@ fn cheat_count_revised(grid: &Grid, max: usize, seconds: usize) -> usize {
     let mut cheat_list = HashMap::new();
 
     for i in (0..regular.len()).rev() {
-        let id = regular[i] as usize;
-        let start = grid.to_point(id);
+        let start = grid.to_point(regular[i]);
 
         for ny in 0..grid.size {
             for nx in 0..grid.size {
                 let cheat_end = (ny as i16, nx as i16);
+
                 if grid.is_wall(&cheat_end) {
                     continue
                 }
