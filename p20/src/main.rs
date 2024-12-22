@@ -110,6 +110,7 @@ fn manhattan_dist(s: &Point, e: &Point) -> usize {
     (dx + dy) as usize
 }
 
+// Only useful if there's a single direction to walk in from 'start'
 fn simple_route(grid: &Grid, start: &Point, end: &Point) -> Vec<Point> {
     let mut route: Vec<Point> = vec![*start];
     let mut step = *start;
