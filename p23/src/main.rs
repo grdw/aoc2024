@@ -71,6 +71,7 @@ fn test_t_count() {
 fn max_connection_count(nodes: &Nodes, edges: &Edges) -> String {
     let mut graph: HashMap<usize, Vec<usize>> = HashMap::new();
     let mut visited = HashSet::new();
+    let mut max_comb = vec![];
 
     for (l, r) in edges {
         graph.entry(*l).or_default().push(*r);
@@ -78,37 +79,45 @@ fn max_connection_count(nodes: &Nodes, edges: &Edges) -> String {
 
     for &i in graph.keys() {
         let mut queue = VecDeque::new();
+        let mut comb = vec![];
         queue.push_back(i);
+        visited.insert(i);
 
         while let Some(current) = queue.pop_front() {
             if let Some(neighbors) = graph.get(&current) {
-                println!("---> {}", current);
+                comb.push(current);
                 for &neighbor in neighbors {
-                    let m = (neighbor, current);
-                    let n = (current, neighbor);
-                    if visited.contains(&n) || visited.contains(&m) {
+                    if visited.contains(&neighbor) {
                         continue
                     }
 
-                    println!("{} {}", nodes[current], nodes[neighbor]);
-                    visited.insert(n);
-                    visited.insert(m);
+                    visited.insert(neighbor);
                     queue.push_back(neighbor);
                 }
             }
         }
+
+        if comb.len() > max_comb.len() {
+            max_comb = comb;
+        }
     }
 
+    //let mut set = HashSet::new();
+    for c in &max_comb {
+        println!("{:?}", graph[c].len());
+    }
 
-    //let mut sorted: Vec<&str> = largest_comp
+    //let mut sorted: Vec<&str> = set
     //    .iter()
-    //    .map(|n| nodes[*n].as_str())
+    //    .map(|s| nodes[**s].as_str())
     //    .collect();
 
     //sorted.sort();
     //sorted.join(",")
-    String::from("THE WRONG ANSWER")
+    String::from("WRONG")
 }
+
+
 
 #[test]
 fn test_max_connection_count() {
