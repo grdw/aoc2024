@@ -94,7 +94,6 @@ fn decimal_number(nodes: &mut Nodes, edges: &Edges) -> usize {
                         }
 
                     },
-                    // Not sure if this is going to do shit
                     _ => queue.push_back((w1, op, w2, out))
                 }
             },
