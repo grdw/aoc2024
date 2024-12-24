@@ -69,7 +69,7 @@ fn parse(input: &'static str) -> (Nodes, Edges) {
 
 fn decimal_number(mut nodes: Nodes, edges: &Edges) -> usize {
     resolve(&mut nodes, edges);
-    form_digit_from(&nodes, "z")
+    form_digit_from(&nodes, "z").unwrap()
 }
 
 #[test]
@@ -81,7 +81,7 @@ fn test_decimal_number() {
     assert_eq!(decimal_number(nodes, &edges), 2024);
 }
 
-fn form_digit_from(nodes: &Nodes, search: &'static str) -> usize {
+fn form_digit_from(nodes: &Nodes, search: &'static str) -> Option<usize> {
     let mut digits = vec![];
     let mut total = String::new();
 
@@ -95,47 +95,51 @@ fn form_digit_from(nodes: &Nodes, search: &'static str) -> usize {
     digits.sort();
 
     for (_, v) in digits.iter().rev() {
-        let q = char::from_digit(v.unwrap() as u32, 10).unwrap();
-        total.push(q);
+        match v {
+            Some(w) => {
+                let q = char::from_digit(*w as u32, 10).unwrap();
+                total.push(q);
+            },
+            None => {
+                return None
+            }
+        }
     }
 
-    usize::from_str_radix(&total, 2).unwrap()
+    Some(usize::from_str_radix(&total, 2).unwrap())
 }
 
-fn resolve(nodes: &mut Nodes, edges: &Edges) -> bool {
+fn resolve(nodes: &mut Nodes, edges: &Edges) {
     let mut queue = VecDeque::new();
-    let mut set = HashMap::new();
     for (w1, op, w2, out) in edges {
-        queue.push_back((w1, op, w2, out));
+        match (&nodes[*w1], &nodes[*w2]) {
+            (Node::Wire(_, v1), Node::Wire(_, v2)) => {
+                if v1.is_some() && v2.is_some() {
+                    queue.push_back((*w1, *op, *w2, *out));
+                }
+            },
+            _ => panic!("Something is fucked")
+        }
     }
 
     while let Some((w1, op, w2, out)) = queue.pop_front() {
-        match (&nodes[*w1], &nodes[*op], &nodes[*w2]) {
+        match (&nodes[w1], &nodes[op], &nodes[w2]) {
             (Node::Wire(_, v1), Node::Op(x), Node::Wire(_, v2)) => {
-                match (v1, v2) {
-                    (Some(a), Some(b)) => {
-                        let result = match x.as_str() {
-                            "AND" => *a & *b,
-                            "OR" => *a | *b,
-                            "XOR" => *a ^ *b,
-                            _ => panic!("Invalid x")
-                        };
+                if let (Some(a), Some(b)) = (v1, v2) {
+                    let result = match x.as_str() {
+                        "AND" => *a & *b,
+                        "OR" => *a | *b,
+                        "XOR" => *a ^ *b,
+                        _ => panic!("Invalid x")
+                    };
 
-                        if let Node::Wire(_, ref mut value) = &mut nodes[*out] {
-                            *value = Some(result);
-                        }
+                    if let Node::Wire(_, ref mut value) = &mut nodes[out] {
+                        *value = Some(result);
 
-                    },
-                    _ => {
-                        let r = (w1, op, w2, out);
-                        let count = *set.get(&r).unwrap_or(&0);
-                        set.insert(r, count + 1);
-
-                        // TODO: This is a really really nasty hack
-                        if count <= 200 {
-                            queue.push_back(r);
-                        } else {
-                            return false
+                        for edge in edges {
+                            if edge.0 == out || edge.2 == out {
+                                queue.push_back(*edge);
+                            }
                         }
                     }
                 }
@@ -143,12 +147,12 @@ fn resolve(nodes: &mut Nodes, edges: &Edges) -> bool {
             _ => continue
         }
     }
-
-    true
 }
 
 fn list_swaps(nodes: Nodes, edges: &mut Edges, max_swaps: usize) -> String {
     fn backtrack(
+        y: usize,
+        x: usize,
         nodes: Nodes,
         edges: &mut Edges,
         swaps: &mut Vec<(usize, usize)>,
@@ -166,13 +170,9 @@ fn list_swaps(nodes: Nodes, edges: &mut Edges, max_swaps: usize) -> String {
                 edges[*j].3 = a;
             }
 
-            let q = resolve(&mut nodes, &edges);
+            resolve(&mut nodes, &edges);
 
-            if q {
-                let z = form_digit_from(&nodes, "z");
-                let y = form_digit_from(&nodes, "y");
-                let x = form_digit_from(&nodes, "x");
-
+            if let Some(z) = form_digit_from(&nodes, "z") {
                 println!("{} + {} = {}", y, x, z);
                 if y + x == z {
                     println!("{:?}", swaps);
@@ -194,6 +194,17 @@ fn list_swaps(nodes: Nodes, edges: &mut Edges, max_swaps: usize) -> String {
 
         for i in start..edges.len() {
             for j in (i + 1)..edges.len() {
+                let a = &edges[i];
+                let b = &edges[j];
+
+                if a.3 == b.0 || a.3 == b.1 {
+                    continue
+                }
+
+                if b.3 == a.0 || b.3 == a.1 {
+                    continue
+                }
+
                 if !set.contains(&i) && !set.contains(&j) {
                     set.insert(i);
                     set.insert(j);
@@ -202,6 +213,8 @@ fn list_swaps(nodes: Nodes, edges: &mut Edges, max_swaps: usize) -> String {
 
                     // Recur for the next set of swaps
                     if let Some(final_swaps) = backtrack(
+                        y,
+                        x,
                         nodes.clone(),
                         edges,
                         swaps,
@@ -225,7 +238,11 @@ fn list_swaps(nodes: Nodes, edges: &mut Edges, max_swaps: usize) -> String {
 
     let mut set = HashSet::new();
     let mut temp_swaps = vec![];
+    let y = form_digit_from(&nodes, "y").unwrap();
+    let x = form_digit_from(&nodes, "x").unwrap();
     let swaps = backtrack(
+        y,
+        x,
         nodes.clone(),
         edges,
         &mut temp_swaps,
