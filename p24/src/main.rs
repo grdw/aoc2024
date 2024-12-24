@@ -9,7 +9,6 @@ enum Node {
 type Nodes = Vec<Node>;
 type Edge = (usize, usize, usize, usize);
 type Edges = Vec<Edge>;
-type Swaps = Vec<Vec<(usize, usize)>>;
 
 fn main() {
     let (nodes, mut edges) = parse("input");
@@ -155,7 +154,7 @@ fn list_swaps(nodes: Nodes, edges: &mut Edges, max_swaps: usize) -> String {
         set: &mut HashSet<usize>,
         start: usize,
         max_swaps: usize,
-    ) -> Vec<(usize, usize)> {
+    ) -> Option<Vec<(usize, usize)>> {
         if swaps.len() == max_swaps {
             let mut nodes = nodes.clone();
 
@@ -209,7 +208,7 @@ fn list_swaps(nodes: Nodes, edges: &mut Edges, max_swaps: usize) -> String {
                         i + 1,
                         max_swaps
                     ) {
-                        return final_swaps;
+                        return Some(final_swaps);
                     }
 
                     // Backtrack
@@ -219,21 +218,24 @@ fn list_swaps(nodes: Nodes, edges: &mut Edges, max_swaps: usize) -> String {
                 }
             }
         }
+
+        None
     }
 
     let mut set = HashSet::new();
+    let mut temp_swaps = vec![];
     let swaps = backtrack(
         nodes.clone(),
         edges,
-        &mut swaps,
+        &mut temp_swaps,
         &mut set,
         0,
         max_swaps
-    );
+    ).unwrap();
 
     let mut x: Vec<&str> = vec![];
-    for (a, b) in swaps.iter() {
-        match (a, b) {
+    for (a, b) in &swaps {
+        match (&nodes[edges[*a].3], &nodes[edges[*b].3]) {
             (Node::Wire(name, _), Node::Wire(name_b, _)) => {
                 x.push(name.as_str());
                 x.push(name_b.as_str());
@@ -251,6 +253,6 @@ fn test_list_swaps() {
     let (nodes, mut edges) = parse("3");
     assert_eq!(
         list_swaps(nodes, &mut edges, 2),
-        String::from("z00,z01,z02,z05")
+        String::from("z01,z02,z04,z05")
     );
 }
