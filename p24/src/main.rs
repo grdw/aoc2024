@@ -1,5 +1,5 @@
 use std::fs;
-use std::collections::{VecDeque, HashMap};
+use std::collections::{VecDeque, HashMap, HashSet};
 
 #[derive(Clone, Debug, PartialEq)]
 enum Node {
@@ -9,10 +9,12 @@ enum Node {
 type Nodes = Vec<Node>;
 type Edge = (usize, usize, usize, usize);
 type Edges = Vec<Edge>;
+type Swaps = Vec<Vec<(usize, usize)>>;
 
 fn main() {
-    let (mut nodes, edges) = parse("input");
-    println!("p1 {}", decimal_number(&mut nodes, &edges));
+    let (nodes, mut edges) = parse("input");
+    println!("p1 {}", decimal_number(nodes.clone(), &edges));
+    println!("p2 {}", list_swaps(nodes.clone(), &mut edges, 4));
 }
 
 fn parse(input: &'static str) -> (Nodes, Edges) {
@@ -66,20 +68,33 @@ fn parse(input: &'static str) -> (Nodes, Edges) {
     (nodes, edges)
 }
 
-fn decimal_number(nodes: &mut Nodes, edges: &Edges) -> usize {
-    resolve(nodes, edges);
+fn decimal_number(mut nodes: Nodes, edges: &Edges) -> usize {
+    resolve(&mut nodes, edges);
+    form_digit_from(&nodes, "z")
+}
 
+#[test]
+fn test_decimal_number() {
+    let (nodes, edges) = parse("1");
+    assert_eq!(decimal_number(nodes, &edges), 4);
+
+    let (nodes, edges) = parse("2");
+    assert_eq!(decimal_number(nodes, &edges), 2024);
+}
+
+fn form_digit_from(nodes: &Nodes, search: &'static str) -> usize {
     let mut digits = vec![];
+    let mut total = String::new();
+
     for n in nodes {
         if let Node::Wire(name, value) = n {
-            if name.starts_with("z") {
+            if name.starts_with(search) {
                digits.push((name, value));
             }
         }
     }
     digits.sort();
 
-    let mut total = String::new();
     for (_, v) in digits.iter().rev() {
         let q = char::from_digit(v.unwrap() as u32, 10).unwrap();
         total.push(q);
@@ -88,8 +103,9 @@ fn decimal_number(nodes: &mut Nodes, edges: &Edges) -> usize {
     usize::from_str_radix(&total, 2).unwrap()
 }
 
-fn resolve(nodes: &mut Nodes, edges: &Edges) {
+fn resolve(nodes: &mut Nodes, edges: &Edges) -> bool {
     let mut queue = VecDeque::new();
+    let mut set = HashMap::new();
     for (w1, op, w2, out) in edges {
         queue.push_back((w1, op, w2, out));
     }
@@ -111,19 +127,130 @@ fn resolve(nodes: &mut Nodes, edges: &Edges) {
                         }
 
                     },
-                    _ => queue.push_back((w1, op, w2, out))
+                    _ => {
+                        let r = (w1, op, w2, out);
+                        let count = *set.get(&r).unwrap_or(&0);
+                        set.insert(r, count + 1);
+
+                        if count <= 200 {
+                            queue.push_back(r);
+                        } else {
+                            return false
+                        }
+                    }
                 }
             },
             _ => continue
         }
     }
+
+    true
+}
+
+fn list_swaps(nodes: Nodes, edges: &mut Edges, max_swaps: usize) -> String {
+    fn backtrack(
+        nodes: Nodes,
+        edges: &mut Edges,
+        swaps: &mut Vec<(usize, usize)>,
+        set: &mut HashSet<usize>,
+        start: usize,
+        max_swaps: usize,
+    ) -> Vec<(usize, usize)> {
+        if swaps.len() == max_swaps {
+            let mut nodes = nodes.clone();
+
+            for (i, j) in swaps.iter() {
+                let a = edges[*i].3;
+                let b = edges[*j].3;
+                edges[*i].3 = b;
+                edges[*j].3 = a;
+            }
+
+            let q = resolve(&mut nodes, &edges);
+
+            if q {
+                let z = form_digit_from(&nodes, "z");
+                let y = form_digit_from(&nodes, "y");
+                let x = form_digit_from(&nodes, "x");
+
+                println!("{} + {} = {}", y, x, z);
+                if y + x == z {
+                    println!("{:?}", swaps);
+                    println!("FOUND IT");
+                    return Some(swaps.clone());
+                }
+
+                // Swap everything back
+                for (j, i) in swaps.iter() {
+                    let a = edges[*i].3;
+                    let b = edges[*j].3;
+                    edges[*i].3 = b;
+                    edges[*j].3 = a;
+                }
+            }
+
+            return None;
+        }
+
+        for i in start..edges.len() {
+            for j in (i + 1)..edges.len() {
+                if !set.contains(&i) && !set.contains(&j) {
+                    set.insert(i);
+                    set.insert(j);
+                    // Check if this pair (i, i+1) is valid
+                    swaps.push((i, j));
+
+                    // Recur for the next set of swaps
+                    if let Some(final_swaps) = backtrack(
+                        nodes.clone(),
+                        edges,
+                        swaps,
+                        set,
+                        i + 1,
+                        max_swaps
+                    ) {
+                        return final_swaps;
+                    }
+
+                    // Backtrack
+                    swaps.pop();
+                    set.remove(&i);
+                    set.remove(&j);
+                }
+            }
+        }
+    }
+
+    let mut set = HashSet::new();
+    let swaps = backtrack(
+        nodes.clone(),
+        edges,
+        &mut swaps,
+        &mut set,
+        0,
+        max_swaps
+    );
+
+    let mut x: Vec<&str> = vec![];
+    for (a, b) in swaps.iter() {
+        match (a, b) {
+            (Node::Wire(name, _), Node::Wire(name_b, _)) => {
+                x.push(name.as_str());
+                x.push(name_b.as_str());
+            },
+            _ => panic!("You swapped garbage my boy")
+        }
+    }
+
+    x.sort();
+    x.join(",")
 }
 
 #[test]
-fn test_decimal_number() {
-    let (mut nodes, edges) = parse("1");
-    assert_eq!(decimal_number(&mut nodes, &edges), 4);
-
-    let (mut nodes, edges) = parse("2");
-    assert_eq!(decimal_number(&mut nodes, &edges), 2024);
+fn test_list_swaps() {
+    let (nodes, mut edges) = parse("3");
+    assert_eq!(
+        list_swaps(nodes, &mut edges, 2),
+        String::from("z00,z01,z02,z05")
+    );
 }
