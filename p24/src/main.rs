@@ -69,12 +69,7 @@ fn parse(input: &'static str) -> (Nodes, Edges) {
 fn decimal_number(nodes: &mut Nodes, edges: &Edges) -> usize {
     let mut queue = VecDeque::new();
     for (w1, op, w2, out) in edges {
-        match (&nodes[*w1], &nodes[*w2]) {
-            (Node::Wire(_, _), Node::Wire(_, _)) => {
-                queue.push_back((w1, op, w2, out));
-            }
-            _ => continue
-        }
+        queue.push_back((w1, op, w2, out));
     }
 
     while let Some((w1, op, w2, out)) = queue.pop_front() {
