@@ -131,6 +131,7 @@ fn resolve(nodes: &mut Nodes, edges: &Edges) -> bool {
                         let count = *set.get(&r).unwrap_or(&0);
                         set.insert(r, count + 1);
 
+                        // TODO: This is a really really nasty hack
                         if count <= 200 {
                             queue.push_back(r);
                         } else {
