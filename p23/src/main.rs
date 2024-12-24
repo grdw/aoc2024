@@ -1,5 +1,5 @@
 use std::fs;
-use std::collections::{VecDeque, HashSet, HashMap};
+use std::collections::{HashSet, HashMap};
 
 type Nodes = Vec<String>;
 type Edges = Vec<(usize, usize)>;
@@ -70,54 +70,54 @@ fn test_t_count() {
 
 fn max_connection_count(nodes: &Nodes, edges: &Edges) -> String {
     let mut graph: HashMap<usize, Vec<usize>> = HashMap::new();
-    let mut visited = HashSet::new();
-    let mut max_comb = vec![];
+    let mut b: HashMap<String, usize> = HashMap::new();
+    let mut max_comb: Vec<usize> = vec![];
 
     for (l, r) in edges {
         graph.entry(*l).or_default().push(*r);
     }
 
-    for &i in graph.keys() {
-        let mut queue = VecDeque::new();
-        let mut comb = vec![];
-        queue.push_back(i);
-        visited.insert(i);
+    for i in 0..nodes.len() {
+        let mut x = graph[&i].clone();
+        x.push(i);
+        for key in &mut subsets(&x[..], 0) {
+            key.sort();
 
-        while let Some(current) = queue.pop_front() {
-            if let Some(neighbors) = graph.get(&current) {
-                comb.push(current);
-                for &neighbor in neighbors {
-                    if visited.contains(&neighbor) {
-                        continue
-                    }
+            let c = format!("{:?}", key);
+            let count = *b.get(&c).unwrap_or(&0);
+            b.insert(c, count + 1);
 
-                    visited.insert(neighbor);
-                    queue.push_back(neighbor);
-                }
+            if count + 1 == key.len() && key.len() > max_comb.len() {
+                max_comb = key.clone();
             }
         }
-
-        if comb.len() > max_comb.len() {
-            max_comb = comb;
-        }
     }
 
-    //let mut set = HashSet::new();
-    for c in &max_comb {
-        println!("{:?}", graph[c].len());
-    }
+    let mut list: Vec<&str> = max_comb
+        .iter()
+        .map(|n| nodes[*n].as_str())
+        .collect();
 
-    //let mut sorted: Vec<&str> = set
-    //    .iter()
-    //    .map(|s| nodes[**s].as_str())
-    //    .collect();
-
-    //sorted.sort();
-    //sorted.join(",")
-    String::from("WRONG")
+    list.sort();
+    list.join(",")
 }
 
-
+fn subsets(arr: &[usize], i: usize) -> Vec<Vec<usize>> {
+    if i == arr.len() {
+        vec![vec![]]
+    } else {
+        let rest = subsets(arr, i + 1);
+        rest.iter()
+            .flat_map(|x| {
+                vec![x.clone(), {
+                    let mut subset = vec![arr[i]];
+                    subset.extend_from_slice(x);
+                    subset
+                }]
+            })
+            .collect()
+    }
+}
 
 #[test]
 fn test_max_connection_count() {
