@@ -3,7 +3,7 @@ use std::collections::{VecDeque, HashMap};
 
 #[derive(Clone, Debug, PartialEq)]
 enum Node {
-    Wire(String, Option<bool>),
+    Wire(String, Option<u8>),
     Op(String)
 }
 type Nodes = Vec<Node>;
@@ -25,7 +25,7 @@ fn parse(input: &'static str) -> (Nodes, Edges) {
     let mut map = HashMap::new();
     for input_wire in input_wires.lines() {
         let (node, value) = input_wire.split_once(": ").unwrap();
-        let v = value == "1";
+        let v = value.parse::<u8>().unwrap();
         map.insert(node, v);
     }
 
@@ -67,6 +67,28 @@ fn parse(input: &'static str) -> (Nodes, Edges) {
 }
 
 fn decimal_number(nodes: &mut Nodes, edges: &Edges) -> usize {
+    resolve(nodes, edges);
+
+    let mut digits = vec![];
+    for n in nodes {
+        if let Node::Wire(name, value) = n {
+            if name.starts_with("z") {
+               digits.push((name, value));
+            }
+        }
+    }
+    digits.sort();
+
+    let mut total = String::new();
+    for (_, v) in digits.iter().rev() {
+        let q = char::from_digit(v.unwrap() as u32, 10).unwrap();
+        total.push(q);
+    }
+
+    usize::from_str_radix(&total, 2).unwrap()
+}
+
+fn resolve(nodes: &mut Nodes, edges: &Edges) {
     let mut queue = VecDeque::new();
     for (w1, op, w2, out) in edges {
         queue.push_back((w1, op, w2, out));
@@ -78,8 +100,8 @@ fn decimal_number(nodes: &mut Nodes, edges: &Edges) -> usize {
                 match (v1, v2) {
                     (Some(a), Some(b)) => {
                         let result = match x.as_str() {
-                            "AND" => *a && *b,
-                            "OR" => *a || *b,
+                            "AND" => *a & *b,
+                            "OR" => *a | *b,
                             "XOR" => *a ^ *b,
                             _ => panic!("Invalid x")
                         };
@@ -95,28 +117,6 @@ fn decimal_number(nodes: &mut Nodes, edges: &Edges) -> usize {
             _ => continue
         }
     }
-
-    let mut digits = vec![];
-    for n in nodes {
-        if let Node::Wire(name, value) = n {
-            if name.starts_with("z") {
-               digits.push((name, value));
-            }
-        }
-    }
-    digits.sort();
-
-    let mut total = String::new();
-    for (_, v) in digits.iter().rev() {
-        let q = match v {
-            Some(true) => '1',
-            Some(false) => '0',
-            _ => panic!("Error")
-        };
-        total.push(q);
-    }
-
-    usize::from_str_radix(&total, 2).unwrap()
 }
 
 #[test]
